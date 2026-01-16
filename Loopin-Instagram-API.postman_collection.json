@@ -530,6 +530,175 @@
         }
       ],
       "description": "Instagram webhook endpoints for real-time events"
+    },
+    {
+      "name": "Automation Rules",
+      "item": [
+        {
+          "name": "Create Rule",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountId\": \"{{instagramAccountId}}\",\n  \"name\": \"Price Questions Auto-Reply\",\n  \"description\": \"Reply to comments asking about price\",\n  \"trigger\": \"comment\",\n  \"conditions\": {\n    \"text_contains\": [\"price\", \"cost\", \"how much\"]\n  },\n  \"actions\": {\n    \"reply\": \"Our pricing starts at $99/month! Visit our website for details.\",\n    \"like\": true\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/automation/rules",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "automation", "rules"]
+            },
+            "description": "Create a new automation rule"
+          },
+          "response": []
+        },
+        {
+          "name": "List Rules",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/automation/rules?accountId={{instagramAccountId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "automation", "rules"],
+              "query": [
+                {
+                  "key": "accountId",
+                  "value": "{{instagramAccountId}}",
+                  "description": "Filter by account ID"
+                }
+              ]
+            },
+            "description": "List all automation rules"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Rule",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/automation/rules/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "automation", "rules", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "RULE_ID"
+                }
+              ]
+            },
+            "description": "Get details of a specific automation rule"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Rule",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/automation/rules/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "automation", "rules", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "RULE_ID"
+                }
+              ]
+            },
+            "description": "Update an automation rule"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Rule",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/automation/rules/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "automation", "rules", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "RULE_ID"
+                }
+              ]
+            },
+            "description": "Delete an automation rule"
+          },
+          "response": []
+        }
+      ],
+      "description": "Automation rule management endpoints"
     }
   ]
 }

@@ -27,7 +27,7 @@ export async function handleCommentEvent(
 
   try {
     // Store comment in database
-    await prisma.instagramComment.create({
+    const comment = await prisma.instagramComment.create({
       data: {
         commentId: event.value.id,
         accountId,
@@ -41,10 +41,16 @@ export async function handleCommentEvent(
 
     console.log('✅ Comment stored:', event.value.id);
 
-    // TODO: Trigger automation rules
-    // await checkAutomationRules(accountId, 'comment', event.value);
+    // Process automation rules
+    const { processCommentAutomation } = await import('@/services/automation.service');
+    await processCommentAutomation(accountId, {
+      id: comment.id,
+      commentId: comment.commentId,
+      text: comment.text,
+      username: comment.username,
+    });
   } catch (error) {
-    console.error('❌ Error storing comment:', error);
+    console.error('❌ Error processing comment:', error);
     throw error;
   }
 }

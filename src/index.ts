@@ -9,6 +9,7 @@ import healthRoutes from '@/routes/health.routes';
 import authRoutes from '@/routes/auth.routes';
 import instagramRoutes from '@/routes/instagram.routes';
 import instagramWebhooks from '@/routes/instagram-webhooks.routes';
+import automationRoutes from '@/routes/automation.routes';
 
 const app = new Hono();
 
@@ -30,6 +31,7 @@ app.route('/health', healthRoutes);
 app.route('/api/auth', authRoutes);
 app.route('/api/instagram', instagramRoutes);
 app.route('/api/instagram/webhooks', instagramWebhooks);
+app.route('/api/automation', automationRoutes);
 
 // Start scheduled jobs
 import { scheduleTokenRefreshJob } from '@/jobs/token-refresh.job';
