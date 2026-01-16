@@ -7,6 +7,8 @@ import { errorMiddleware } from '@/middleware/error.middleware';
 import { rateLimitMiddleware } from '@/middleware/rate-limit.middleware';
 import healthRoutes from '@/routes/health.routes';
 import authRoutes from '@/routes/auth.routes';
+import instagramRoutes from '@/routes/instagram.routes';
+import instagramWebhooks from '@/routes/instagram-webhooks.routes';
 
 const app = new Hono();
 
@@ -26,12 +28,14 @@ app.use('*', rateLimitMiddleware);
 // Routes
 app.route('/health', healthRoutes);
 app.route('/api/auth', authRoutes);
+app.route('/api/instagram', instagramRoutes);
+app.route('/api/instagram/webhooks', instagramWebhooks);
 
 // Root endpoint
 app.get('/', (c) => {
   return c.json({
     success: true,
-    message: 'Loopin API',
+    message: 'Loopin API - Instagram Automation SaaS',
     version: '1.0.0',
     endpoints: {
       health: '/health',
@@ -42,6 +46,14 @@ app.get('/', (c) => {
         refresh: 'POST /api/auth/refresh',
         logout: 'POST /api/auth/logout',
         me: 'GET /api/auth/me (protected)',
+      },
+      instagram: {
+        auth: 'GET /api/instagram/auth (protected)',
+        callback: 'GET /api/instagram/callback',
+        accounts: 'GET /api/instagram/accounts (protected)',
+        accountDetails: 'GET /api/instagram/accounts/:id (protected)',
+        refreshAccount: 'POST /api/instagram/accounts/:id/refresh (protected)',
+        disconnect: 'POST /api/instagram/accounts/:id/disconnect (protected)',
       },
     },
   });

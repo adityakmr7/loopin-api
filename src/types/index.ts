@@ -33,3 +33,25 @@ export interface PaginatedResponse<T> {
     totalPages: number;
   };
 }
+
+// Instagram types
+export interface InstagramAccountResponse {
+  id: string;
+  instagramUserId: string;
+  username: string;
+  profilePictureUrl?: string;
+  followersCount?: number;
+  followingCount?: number;
+  mediaCount?: number;
+  biography?: string;
+  isBusinessAccount: boolean;
+  isConnected: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface InstagramOAuthState {
+  token: string;
+  userId: string;
+  createdAt: number;
+}

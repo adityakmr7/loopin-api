@@ -1,0 +1,511 @@
+{
+  "info": {
+    "name": "Loopin API - Instagram Automation",
+    "description": "Complete API collection for Loopin Instagram Automation SaaS platform. Includes user authentication, Instagram OAuth, account management, and webhook endpoints.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "instagramAccountId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Checks",
+      "item": [
+        {
+          "name": "API Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Check if the API is running"
+          },
+          "response": []
+        },
+        {
+          "name": "Database Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health/db",
+              "host": ["{{baseUrl}}"],
+              "path": ["health", "db"]
+            },
+            "description": "Check database connectivity"
+          },
+          "response": []
+        },
+        {
+          "name": "API Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": ["{{baseUrl}}"],
+              "path": [""]
+            },
+            "description": "Get API information and available endpoints"
+          },
+          "response": []
+        }
+      ],
+      "description": "Health check endpoints"
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('accessToken', response.data.tokens.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', response.data.tokens.refreshToken);",
+                  "    console.log('✓ Tokens saved to collection variables');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"securepassword123\",\n  \"name\": \"John Doe\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            },
+            "description": "Register a new user account"
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('accessToken', response.data.tokens.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', response.data.tokens.refreshToken);",
+                  "    console.log('✓ Tokens saved to collection variables');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Login with existing user credentials. Automatically saves tokens to collection variables."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "me"]
+            },
+            "description": "Get current authenticated user information"
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('accessToken', response.data.tokens.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', response.data.tokens.refreshToken);",
+                  "    console.log('✓ New tokens saved');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "refresh"]
+            },
+            "description": "Refresh access token using refresh token"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "logout"]
+            },
+            "description": "Logout and invalidate refresh token"
+          },
+          "response": []
+        }
+      ],
+      "description": "User authentication endpoints"
+    },
+    {
+      "name": "Instagram OAuth",
+      "item": [
+        {
+          "name": "Get Authorization URL",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    const authUrl = response.data.authorizationUrl;",
+                  "    console.log('\\n🔗 Instagram Authorization URL:');",
+                  "    console.log(authUrl);",
+                  "    console.log('\\n📋 Copy this URL and open in your browser to authorize');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/instagram/auth",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "instagram", "auth"]
+            },
+            "description": "Get Instagram OAuth authorization URL. Copy the URL from the response and open it in your browser to connect your Instagram account."
+          },
+          "response": []
+        },
+        {
+          "name": "OAuth Callback (Manual)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/instagram/callback?code=AUTHORIZATION_CODE&state=STATE_TOKEN",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "instagram", "callback"],
+              "query": [
+                {
+                  "key": "code",
+                  "value": "AUTHORIZATION_CODE",
+                  "description": "Authorization code from Instagram"
+                },
+                {
+                  "key": "state",
+                  "value": "STATE_TOKEN",
+                  "description": "State token for CSRF protection"
+                }
+              ]
+            },
+            "description": "This endpoint is called automatically by Instagram after authorization. You don't need to call this manually - it's here for reference only."
+          },
+          "response": []
+        }
+      ],
+      "description": "Instagram OAuth flow endpoints"
+    },
+    {
+      "name": "Instagram Accounts",
+      "item": [
+        {
+          "name": "List Connected Accounts",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.length > 0) {",
+                  "        pm.collectionVariables.set('instagramAccountId', response.data[0].id);",
+                  "        console.log('✓ First account ID saved:', response.data[0].id);",
+                  "        console.log('  Username:', response.data[0].username);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/instagram/accounts",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "instagram", "accounts"]
+            },
+            "description": "Get all connected Instagram accounts for the current user. Automatically saves the first account ID to collection variables."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Account Details",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/instagram/accounts/{{instagramAccountId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "instagram", "accounts", "{{instagramAccountId}}"]
+            },
+            "description": "Get details of a specific Instagram account"
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh Account Data",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/instagram/accounts/{{instagramAccountId}}/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "instagram", "accounts", "{{instagramAccountId}}", "refresh"]
+            },
+            "description": "Refresh Instagram account data from Instagram API"
+          },
+          "response": []
+        },
+        {
+          "name": "Disconnect Account",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/instagram/accounts/{{instagramAccountId}}/disconnect",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "instagram", "accounts", "{{instagramAccountId}}", "disconnect"]
+            },
+            "description": "Disconnect an Instagram account"
+          },
+          "response": []
+        }
+      ],
+      "description": "Instagram account management endpoints"
+    },
+    {
+      "name": "Instagram Webhooks",
+      "item": [
+        {
+          "name": "Webhook Verification (GET)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/instagram/webhooks?hub.mode=subscribe&hub.verify_token=YOUR_VERIFY_TOKEN&hub.challenge=test123",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "instagram", "webhooks"],
+              "query": [
+                {
+                  "key": "hub.mode",
+                  "value": "subscribe"
+                },
+                {
+                  "key": "hub.verify_token",
+                  "value": "YOUR_VERIFY_TOKEN",
+                  "description": "Your webhook verify token from .env"
+                },
+                {
+                  "key": "hub.challenge",
+                  "value": "test123"
+                }
+              ]
+            },
+            "description": "Test webhook verification endpoint. Replace YOUR_VERIFY_TOKEN with your actual token from .env"
+          },
+          "response": []
+        },
+        {
+          "name": "Webhook Event (POST)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"object\": \"instagram\",\n  \"entry\": [\n    {\n      \"id\": \"instagram-account-id\",\n      \"time\": 1234567890,\n      \"changes\": [\n        {\n          \"field\": \"comments\",\n          \"value\": {\n            \"id\": \"comment-id\",\n            \"text\": \"Test comment\",\n            \"from\": {\n              \"id\": \"user-id\",\n              \"username\": \"testuser\"\n            },\n            \"media\": {\n              \"id\": \"media-id\",\n              \"media_product_type\": \"FEED\"\n            }\n          }\n        }\n      ]\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/instagram/webhooks",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "instagram", "webhooks"]
+            },
+            "description": "Test webhook event handler with sample comment event"
+          },
+          "response": []
+        }
+      ],
+      "description": "Instagram webhook endpoints for real-time events"
+    }
+  ]
+}

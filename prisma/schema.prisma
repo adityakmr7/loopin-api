@@ -17,7 +17,8 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  refreshTokens RefreshToken[]
+  refreshTokens     RefreshToken[]
+  instagramAccounts InstagramAccount[]
 
   @@index([email])
   @@map("users")
@@ -35,4 +36,43 @@ model RefreshToken {
   @@index([userId])
   @@index([token])
   @@map("refresh_tokens")
+}
+
+model InstagramAccount {
+  id                String   @id @default(cuid())
+  userId            String
+  instagramUserId   String   @unique
+  username          String
+  profilePictureUrl String?
+  followersCount    Int?
+  followingCount    Int?
+  mediaCount        Int?
+  biography         String?
+  isBusinessAccount Boolean  @default(false)
+  isConnected       Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokens InstagramToken?
+
+  @@index([userId])
+  @@index([instagramUserId])
+  @@map("instagram_accounts")
+}
+
+model InstagramToken {
+  id                 String    @id @default(cuid())
+  instagramAccountId String    @unique
+  accessToken        String    @db.Text
+  tokenType          String    @default("Bearer")
+  expiresAt          DateTime?
+  scope              String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  instagramAccount InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+
+  @@index([instagramAccountId])
+  @@map("instagram_tokens")
 }

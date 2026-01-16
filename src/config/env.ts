@@ -11,6 +11,12 @@ const envSchema = z.object({
   ALLOWED_ORIGINS: z.string().default('http://localhost:3000'),
   RATE_LIMIT_WINDOW_MS: z.string().default('900000'),
   RATE_LIMIT_MAX_REQUESTS: z.string().default('100'),
+  INSTAGRAM_APP_ID: z.string().min(1),
+  INSTAGRAM_APP_SECRET: z.string().min(1),
+  INSTAGRAM_REDIRECT_URI: z.string().url(),
+  INSTAGRAM_API_VERSION: z.string().default('v18.0'),
+  INSTAGRAM_WEBHOOK_VERIFY_TOKEN: z.string().optional(),
+  ENCRYPTION_KEY: z.string().min(32),
 });
 
 // Validate environment variables
@@ -47,5 +53,15 @@ export const config = {
   rateLimit: {
     windowMs: parseInt(env.RATE_LIMIT_WINDOW_MS, 10),
     maxRequests: parseInt(env.RATE_LIMIT_MAX_REQUESTS, 10),
+  },
+  instagram: {
+    appId: env.INSTAGRAM_APP_ID,
+    appSecret: env.INSTAGRAM_APP_SECRET,
+    redirectUri: env.INSTAGRAM_REDIRECT_URI,
+    apiVersion: env.INSTAGRAM_API_VERSION,
+    webhookVerifyToken: env.INSTAGRAM_WEBHOOK_VERIFY_TOKEN || '',
+  },
+  encryption: {
+    key: env.ENCRYPTION_KEY,
   },
 };
