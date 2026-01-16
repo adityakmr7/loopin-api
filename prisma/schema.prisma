@@ -53,8 +53,10 @@ model InstagramAccount {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tokens InstagramToken?
+  user     User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokens   InstagramToken?
+  events   WebhookEvent[]
+  comments InstagramComment[]
 
   @@index([userId])
   @@index([instagramUserId])
@@ -75,4 +77,47 @@ model InstagramToken {
 
   @@index([instagramAccountId])
   @@map("instagram_tokens")
+}
+
+model WebhookEvent {
+  id              String    @id @default(cuid())
+  eventType       String    // "comments", "mentions", "messages", "media"
+  instagramUserId String    // Instagram user ID who triggered event
+  accountId       String    // Our Instagram account that received event
+  payload         Json      // Full webhook payload
+  processed       Boolean   @default(false)
+  processedAt     DateTime?
+  error           String?
+  createdAt       DateTime  @default(now())
+
+  account InstagramAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@index([eventType])
+  @@index([processed])
+  @@index([createdAt])
+  @@map("webhook_events")
+}
+
+model InstagramComment {
+  id        String   @id @default(cuid())
+  commentId String   @unique // Instagram comment ID
+  accountId String
+  mediaId   String   // Post ID
+  text      String   @db.Text
+  username  String   // Commenter username
+  timestamp DateTime
+  isReply   Boolean  @default(false)
+  parentId  String?  // If reply, parent comment ID
+  replied   Boolean  @default(false)
+  replyText String?  @db.Text
+  repliedAt DateTime?
+  createdAt DateTime @default(now())
+
+  account InstagramAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@index([mediaId])
+  @@index([commentId])
+  @@map("instagram_comments")
 }

@@ -41,9 +41,31 @@ webhooks.post('/', async (c) => {
   // Process webhook events
   if (body.object === 'instagram') {
     for (const entry of body.entry || []) {
+      const instagramUserId = entry.id;
+      
+      // Find our account ID from Instagram user ID
+      const { prisma } = await import('@/config/database');
+      const account = await prisma.instagramAccount.findFirst({
+        where: { instagramUserId },
+      });
+
+      if (!account) {
+        console.log(`⚠️ Account not found for Instagram ID: ${instagramUserId}`);
+        continue;
+      }
+
+      console.log(`📱 Processing events for account: ${account.username}`);
+
       // Process each change
+      const { processWebhookEvent } = await import('@/services/webhook-processor.service');
+      
       for (const change of entry.changes || []) {
-        await processWebhookChange(change);
+        try {
+          await processWebhookEvent(account.id, change.field, change.value);
+        } catch (error) {
+          console.error(`❌ Failed to process change:`, error);
+          // Continue processing other changes even if one fails
+        }
       }
     }
   }
@@ -51,47 +73,5 @@ webhooks.post('/', async (c) => {
   // Always respond with 200 OK quickly
   return c.json({ success: true });
 });
-
-/**
- * Process individual webhook changes
- */
-async function processWebhookChange(change: any) {
-  const { field, value } = change;
-
-  console.log(`📬 Webhook event - Field: ${field}`);
-
-  switch (field) {
-    case 'comments':
-      console.log('💬 New comment:', value);
-      // TODO: Handle new comment
-      // - Auto-reply based on rules
-      // - Moderate spam
-      // - Notify user
-      break;
-
-    case 'mentions':
-      console.log('📢 New mention:', value);
-      // TODO: Handle mention
-      // - Track brand mentions
-      // - Notify user
-      break;
-
-    case 'story_insights':
-      console.log('📊 Story insights:', value);
-      // TODO: Handle story insights
-      // - Store analytics
-      break;
-
-    case 'messages':
-      console.log('💌 New message:', value);
-      // TODO: Handle DM
-      // - Auto-reply
-      // - Route to support
-      break;
-
-    default:
-      console.log('ℹ️ Unhandled webhook field:', field);
-  }
-}
 
 export default webhooks;
