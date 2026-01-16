@@ -1,5 +1,6 @@
 import {
   exchangeCodeForToken,
+  getLongLivedToken,
   refreshAccessToken as refreshInstagramToken,
 } from '@/lib/instagram-oauth';
 import { createInstagramClient } from '@/lib/instagram-client';
@@ -21,20 +22,21 @@ export async function connectInstagramAccount(
   userId: string,
   code: string
 ): Promise<InstagramAccount> {
-  // Exchange code for Facebook access token
+  // Step 1: Exchange code for short-lived access token (1 hour)
   const tokenResponse = await exchangeCodeForToken(code);
+  const shortLivedToken = tokenResponse.access_token;
 
-  // The Facebook token can be used directly with Instagram Graph API
-  // No need for long-lived token exchange - Facebook tokens are already long-lived
-  const accessToken = tokenResponse.access_token;
+  // Step 2: Exchange short-lived token for long-lived token (60 days)
+  const longLivedTokenResponse = await getLongLivedToken(shortLivedToken);
+  const accessToken = longLivedTokenResponse.access_token;
 
-  // Fetch user profile using Instagram Graph API
+  // Step 3: Fetch user profile using Instagram API
   const client = createInstagramClient(accessToken);
   const profile = await client.getUserProfile();
 
-  // Facebook tokens typically expire in 60 days
+  // Long-lived tokens expire in 60 days
   const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + 60); // 60 days from now
+  expiresAt.setDate(expiresAt.getDate() + 60);
 
   // Store account
   const account = await upsertInstagramAccount({
@@ -51,7 +53,7 @@ export async function connectInstagramAccount(
     accessToken: accessToken,
     tokenType: 'Bearer',
     expiresAt,
-    scope: 'instagram_basic,pages_show_list',
+    scope: 'instagram_business_basic,instagram_business_content_publish,instagram_business_manage_messages,instagram_business_manage_comments',
   });
 
   return account;

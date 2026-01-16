@@ -6,7 +6,7 @@ export const oauthCallbackSchema = z.object({
 });
 
 export const accountIdSchema = z.object({
-  accountId: z.string().cuid('Invalid account ID'),
+  id: z.string().cuid('Invalid account ID'),
 });
 
 export type OAuthCallbackInput = z.infer<typeof oauthCallbackSchema>;

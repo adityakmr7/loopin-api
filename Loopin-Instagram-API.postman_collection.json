@@ -1,9 +1,9 @@
 {
   "info": {
     "name": "Loopin API - Instagram Automation",
-    "description": "Complete API collection for Loopin Instagram Automation SaaS platform. Includes user authentication, Instagram OAuth, account management, and webhook endpoints.",
+    "description": "Complete API collection for Loopin Instagram Automation SaaS platform using Instagram API with Instagram Login (no Facebook Page required). Includes user authentication, Instagram OAuth, account management, and webhook endpoints.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "version": "1.0.0"
+    "version": "2.0.0"
   },
   "auth": {
     "type": "bearer",
@@ -296,7 +296,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "instagram", "auth"]
             },
-            "description": "Get Instagram OAuth authorization URL. Copy the URL from the response and open it in your browser to connect your Instagram account."
+            "description": "Get Instagram OAuth authorization URL using Instagram Login (not Facebook Login). This does NOT require a Facebook Page. The flow will:\n1. Return an Instagram authorization URL\n2. User authorizes via Instagram (not Facebook)\n3. Short-lived token (1 hour) is exchanged for long-lived token (60 days)\n\nCopy the authorizationUrl from the response and open it in your browser to connect your Instagram Business/Creator account."
           },
           "response": []
         },
@@ -322,12 +322,12 @@
                 }
               ]
             },
-            "description": "This endpoint is called automatically by Instagram after authorization. You don't need to call this manually - it's here for reference only."
+            "description": "This endpoint is called automatically by Instagram after authorization. The backend will:\n1. Validate the state token (CSRF protection)\n2. Exchange the code for a short-lived token (1 hour)\n3. Exchange the short-lived token for a long-lived token (60 days)\n4. Fetch and store the Instagram account details\n\nYou don't need to call this manually - it's here for reference only."
           },
           "response": []
         }
       ],
-      "description": "Instagram OAuth flow endpoints"
+      "description": "Instagram OAuth flow using Instagram Login (Business Login). No Facebook Page required - works directly with Instagram Professional accounts (Business/Creator)."
     },
     {
       "name": "Instagram Accounts",

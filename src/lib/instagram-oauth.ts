@@ -15,27 +15,29 @@ export interface InstagramUserProfile {
 
 /**
  * Generate Instagram OAuth authorization URL
- * Using Facebook Login for Instagram Graph API (Business accounts)
+ * Using Instagram Login (Business Login for Instagram)
+ * This does NOT require a Facebook Page
  */
 export function getAuthorizationUrl(state: string): string {
   const params = new URLSearchParams({
     client_id: config.instagram.appId,
     redirect_uri: config.instagram.redirectUri,
-    scope: 'instagram_basic,pages_show_list,pages_manage_metadata',
     response_type: 'code',
+    scope: 'instagram_business_basic,instagram_business_content_publish,instagram_business_manage_messages,instagram_business_manage_comments',
     state,
   });
 
-  // Use Facebook OAuth for Instagram Graph API
-  return `https://www.facebook.com/v18.0/dialog/oauth?${params.toString()}`;
+  // Use Instagram OAuth (not Facebook OAuth)
+  return `https://www.instagram.com/oauth/authorize?${params.toString()}`;
 }
 
 /**
- * Exchange authorization code for access token
- * Using Facebook Graph API for Instagram Business accounts
+ * Exchange authorization code for short-lived access token
+ * Using Instagram API (Business Login)
+ * Returns a short-lived token (1 hour) that should be exchanged for long-lived token
  */
 export async function exchangeCodeForToken(code: string): Promise<InstagramTokenResponse> {
-  const params = new URLSearchParams({
+  const formData = new URLSearchParams({
     client_id: config.instagram.appId,
     client_secret: config.instagram.appSecret,
     grant_type: 'authorization_code',
@@ -43,9 +45,13 @@ export async function exchangeCodeForToken(code: string): Promise<InstagramToken
     code,
   });
 
-  const response = await fetch(
-    `https://graph.facebook.com/v18.0/oauth/access_token?${params.toString()}`
-  );
+  const response = await fetch('https://api.instagram.com/oauth/access_token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: formData,
+  });
 
   if (!response.ok) {
     const error = await response.text();
