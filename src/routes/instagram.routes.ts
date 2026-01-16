@@ -88,19 +88,12 @@ instagram.get('/callback', zValidator('query', oauthCallbackSchema), async (c) =
     // Connect Instagram account
     const account = await connectInstagramAccount(userId, code);
 
-    const response: ApiResponse = {
-      success: true,
-      message: 'Instagram account connected successfully',
-      data: account,
-    };
-
-    return c.json(response);
+    // Redirect to frontend dashboard on success
+    return c.redirect('http://localhost:3001/dashboard?instagram_connected=true');
   } catch (error) {
-    const response: ApiResponse = {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to connect Instagram account',
-    };
-    return c.json(response, 400);
+    const message = error instanceof Error ? error.message : 'Failed to connect Instagram account';
+    // Redirect to frontend with error
+    return c.redirect(`http://localhost:3001/dashboard?error=${encodeURIComponent(message)}`);
   }
 });
 
