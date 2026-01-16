@@ -53,7 +53,7 @@ async function replyToComment(
     throw new Error(`Failed to reply: ${error}`);
   }
 
-  const result = await response.json();
+  const result = (await response.json()) as { id: string };
   console.log(`✅ Reply posted: ${result.id}`);
   
   // Mark comment as replied in database
