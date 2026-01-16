@@ -208,4 +208,30 @@ instagram.post('/accounts/:id/disconnect', authMiddleware, zValidator('param', a
   }
 });
 
+/**
+ * POST /api/instagram/accounts/:id/refresh-token
+ * Manually refresh Instagram access token (protected)
+ */
+instagram.post('/accounts/:id/refresh-token', authMiddleware, zValidator('param', accountIdSchema), async (c) => {
+  const { id } = c.req.valid('param');
+
+  try {
+    const { refreshInstagramToken } = await import('@/services/token-refresh.service');
+    await refreshInstagramToken(id);
+
+    const response: ApiResponse = {
+      success: true,
+      message: 'Token refreshed successfully',
+    };
+
+    return c.json(response);
+  } catch (error) {
+    const response: ApiResponse = {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to refresh token',
+    };
+    return c.json(response, 500);
+  }
+});
+
 export default instagram;

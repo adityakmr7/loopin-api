@@ -31,6 +31,10 @@ app.route('/api/auth', authRoutes);
 app.route('/api/instagram', instagramRoutes);
 app.route('/api/instagram/webhooks', instagramWebhooks);
 
+// Start scheduled jobs
+import { scheduleTokenRefreshJob } from '@/jobs/token-refresh.job';
+scheduleTokenRefreshJob();
+
 // Root endpoint
 app.get('/', (c) => {
   return c.json({

@@ -423,6 +423,30 @@
           "response": []
         },
         {
+          "name": "Refresh Access Token",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/instagram/accounts/{{instagramAccountId}}/refresh-token",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "instagram", "accounts", "{{instagramAccountId}}", "refresh-token"]
+            },
+            "description": "Manually refresh Instagram access token. This extends the token validity for another 60 days. Tokens are automatically refreshed by the system when they have less than 7 days until expiry."
+          },
+          "response": []
+        },
+        {
           "name": "Disconnect Account",
           "request": {
             "auth": {
