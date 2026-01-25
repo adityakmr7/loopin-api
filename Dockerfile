@@ -24,6 +24,8 @@ RUN bun run db:generate
 # Production image
 FROM base AS release
 COPY --from=install /temp/prod/node_modules node_modules
+COPY --from=prerelease /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=prerelease /app/node_modules/@prisma/client ./node_modules/@prisma/client
 COPY --from=prerelease /app/src ./src
 COPY --from=prerelease /app/prisma ./prisma
 COPY --from=prerelease /app/package.json .
