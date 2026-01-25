@@ -5,6 +5,7 @@ interface CommentEvent {
   value: {
     id: string;
     text: string;
+    parent_id?: string;
     from: {
       id: string;
       username: string;
@@ -26,16 +27,22 @@ export async function handleCommentEvent(
   console.log('💬 Processing comment event:', event.value.id);
 
   try {
-    // Store comment in database
-    const comment = await prisma.instagramComment.create({
-      data: {
+    // Store comment in database (use upsert to handle duplicates)
+    const comment = await prisma.instagramComment.upsert({
+      where: { commentId: event.value.id },
+      update: {
+        text: event.value.text,
+        timestamp: new Date(),
+      },
+      create: {
         commentId: event.value.id,
         accountId,
         mediaId: event.value.media.id,
         text: event.value.text,
         username: event.value.from.username,
         timestamp: new Date(),
-        isReply: false,
+        isReply: !!event.value.parent_id,
+        parentId: event.value.parent_id,
       },
     });
 

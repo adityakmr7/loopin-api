@@ -34,6 +34,29 @@ export async function connectInstagramAccount(
   const client = createInstagramClient(accessToken);
   const profile = await client.getUserProfile();
 
+  // Step 3.5: Explicitly subscribe to webhooks
+  // This is required to link the Instagram Account to the App's Webhooks
+  try {
+    const fields = 'comments,mentions,messages';
+    console.log(`🔌 Attempting to subscribe to fields: ${fields}`);
+    
+    // Using v19.0 (latest) for better compatibility
+    const response = await fetch(`https://graph.instagram.com/v19.0/me/subscribed_apps?access_token=${accessToken}&subscribed_fields=${fields}`, {
+      method: 'POST'
+    });
+    
+    const responseBody = await response.json();
+    
+    if (!response.ok) {
+        console.error('❌ Webhook Subscription Failed:', JSON.stringify(responseBody, null, 2));
+    } else {
+        console.log('✅ Explicitly subscribed to Instagram webhooks:', JSON.stringify(responseBody));
+    }
+  } catch (error) {
+    console.warn('⚠️ Failed to explicitly subscribe to webhooks:', error);
+    // Don't fail the connection, it might already be subscribed auto-magically
+  }
+
   // Long-lived tokens expire in 60 days
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + 60);

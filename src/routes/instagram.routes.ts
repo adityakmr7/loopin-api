@@ -106,7 +106,7 @@ instagram.get('/accounts', authMiddleware, async (c) => {
 
   try {
     const accounts = await getUserInstagramAccounts(userId);
-
+    
     const response: ApiResponse = {
       success: true,
       data: accounts,
@@ -224,6 +224,40 @@ instagram.post('/accounts/:id/refresh-token', authMiddleware, zValidator('param'
       error: error instanceof Error ? error.message : 'Failed to refresh token',
     };
     return c.json(response, 500);
+  }
+});
+
+
+/**
+ * GET /api/instagram/debug/subscription
+ * DEBUG: Check if the app is actually subscribed to the user's webhooks
+ */
+instagram.get('/debug/subscription', async (c) => {
+  try {
+    // temporary: grab the first account found for debugging
+    const { prisma } = await import('@/config/database');
+    const account = await prisma.instagramAccount.findFirst();
+    
+    if (!account) return c.json({ error: 'No accounts found in DB' });
+
+    const { getDecryptedAccessToken } = await import('@/services/instagram-account.service');
+    const token = await getDecryptedAccessToken(account.id);
+    
+    if (!token) return c.json({ error: 'No token found' });
+
+    // Check subscriptions
+    // GET /me/subscribed_apps
+    const resp = await fetch(`https://graph.instagram.com/v19.0/me/subscribed_apps?access_token=${token}`);
+    const data = await resp.json();
+
+    return c.json({
+        account_id: account.id,
+        username: account.username,
+        subscription_status: data
+    });
+
+  } catch (e: any) {
+    return c.json({ error: e.message });
   }
 });
 

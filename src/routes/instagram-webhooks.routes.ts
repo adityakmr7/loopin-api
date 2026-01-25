@@ -1,6 +1,8 @@
 import { Hono } from 'hono';
 import { config } from '@/config/env';
 import type { ApiResponse } from '@/types';
+import { prisma } from '@/config/database';
+import { processWebhookEvent } from '@/services/webhook-processor.service';
 
 const webhooks = new Hono();
 
@@ -32,6 +34,7 @@ webhooks.get('/', (c) => {
  */
 webhooks.post('/', async (c) => {
   const body = await c.req.json();
+  console.log("body", body)
 
   console.log('📩 Instagram webhook received:', JSON.stringify(body, null, 2));
 
@@ -44,7 +47,6 @@ webhooks.post('/', async (c) => {
       const instagramUserId = entry.id;
       
       // Find our account ID from Instagram user ID
-      const { prisma } = await import('@/config/database');
       const account = await prisma.instagramAccount.findFirst({
         where: { instagramUserId },
       });
@@ -55,9 +57,8 @@ webhooks.post('/', async (c) => {
       }
 
       console.log(`📱 Processing events for account: ${account.username}`);
-
+      
       // Process each change
-      const { processWebhookEvent } = await import('@/services/webhook-processor.service');
       
       for (const change of entry.changes || []) {
         try {
