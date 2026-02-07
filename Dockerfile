@@ -30,6 +30,7 @@ COPY --from=prerelease /app/src ./src
 COPY --from=prerelease /app/prisma ./prisma
 COPY --from=prerelease /app/package.json .
 COPY --from=prerelease /app/tsconfig.json .
+COPY --from=prerelease /app/prisma.config.ts .
 
 # Copy entrypoint script
 COPY docker-entrypoint.sh .
