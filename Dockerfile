@@ -31,8 +31,12 @@ COPY --from=prerelease /app/prisma ./prisma
 COPY --from=prerelease /app/package.json .
 COPY --from=prerelease /app/tsconfig.json .
 
+# Copy entrypoint script
+COPY docker-entrypoint.sh .
+RUN chmod +x docker-entrypoint.sh
+
 # Expose port
 EXPOSE 3000
 
-# Run the app
-CMD ["bun", "run", "src/index.ts"]
+# Run migrations and start the app
+CMD ["./docker-entrypoint.sh"]
