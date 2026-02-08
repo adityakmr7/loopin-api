@@ -257,6 +257,67 @@
       "description": "User authentication endpoints"
     },
     {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Get Account Stats",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/stats?accountId={{instagramAccountId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard", "stats"],
+              "query": [
+                {
+                  "key": "accountId",
+                  "value": "{{instagramAccountId}}",
+                  "description": "Instagram account ID"
+                }
+              ]
+            },
+            "description": "Get dashboard statistics for a specific Instagram account including active rules count, events processed in last 30 days, auto replies sent, and recent activity feed."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Overview Stats",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/overview",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard", "overview"]
+            },
+            "description": "Get overview statistics for all connected Instagram accounts including total active rules, total events processed, and total auto replies across all accounts."
+          },
+          "response": []
+        }
+      ],
+      "description": "Dashboard statistics endpoints for overview metrics"
+    },
+    {
       "name": "Instagram OAuth",
       "item": [
         {

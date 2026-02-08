@@ -27,8 +27,10 @@ app.use('*', errorMiddleware);
 app.use('*', rateLimitMiddleware);
 
 // Routes
+import dashboardRoutes from '@/routes/dashboard.routes';
 app.route('/health', healthRoutes);
 app.route('/api/auth', authRoutes);
+app.route('/api/dashboard', dashboardRoutes);
 app.route('/api/instagram', instagramRoutes);
 app.route('/api/instagram/webhooks', instagramWebhooks);
 app.route('/api/automation', automationRoutes);
