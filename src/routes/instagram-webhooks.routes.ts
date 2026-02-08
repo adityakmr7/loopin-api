@@ -44,15 +44,31 @@ webhooks.post('/', async (c) => {
   // Process webhook events
   if (body.object === 'instagram') {
     for (const entry of body.entry || []) {
-      const instagramUserId = entry.id;
+      const businessAccountId = entry.id; // This is the Instagram Business Account ID
       
-      // Find our account ID from Instagram user ID
-      const account = await prisma.instagramAccount.findFirst({
-        where: { instagramUserId },
+      // Try to find account by business account ID first (new accounts)
+      let account = await prisma.instagramAccount.findFirst({
+        where: { instagramBusinessAccountId: businessAccountId },
       });
 
+      // Fallback: Try to find by user ID (for old accounts that haven't been updated yet)
       if (!account) {
-        console.log(`⚠️ Account not found for Instagram ID: ${instagramUserId}`);
+        account = await prisma.instagramAccount.findFirst({
+          where: { instagramUserId: businessAccountId },
+        });
+        
+        // If found via fallback, auto-update with business account ID
+        if (account) {
+          await prisma.instagramAccount.update({
+            where: { id: account.id },
+            data: { instagramBusinessAccountId: businessAccountId },
+          });
+          console.log(`✅ Auto-updated business account ID for @${account.username}`);
+        }
+      }
+
+      if (!account) {
+        console.log(`⚠️ Account not found for Instagram Business Account ID: ${businessAccountId}`);
         continue;
       }
 

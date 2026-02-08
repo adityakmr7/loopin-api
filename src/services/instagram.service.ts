@@ -61,10 +61,22 @@ export async function connectInstagramAccount(
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + 60);
 
+  // Get business account ID for webhook matching
+  let businessAccountId: string | null = null;
+  if (profile.account_type === 'BUSINESS' || profile.account_type === 'MEDIA_CREATOR') {
+    try {
+      businessAccountId = await client.getBusinessAccountId();
+      console.log(`📊 Business Account ID: ${businessAccountId || 'not found'}`);
+    } catch (error) {
+      console.warn('⚠️ Could not fetch business account ID, will use user ID as fallback');
+    }
+  }
+
   // Store account
   const account = await upsertInstagramAccount({
     userId,
     instagramUserId: profile.id,
+    instagramBusinessAccountId: businessAccountId || profile.id, // Use user ID as fallback
     username: profile.username,
     mediaCount: profile.media_count,
     followersCount: profile.followers_count,

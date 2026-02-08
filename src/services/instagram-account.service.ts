@@ -8,6 +8,7 @@ import type { InstagramAccount, InstagramToken } from '@prisma/client';
 export async function upsertInstagramAccount(data: {
   userId: string;
   instagramUserId: string;
+  instagramBusinessAccountId?: string;
   username: string;
   profilePictureUrl?: string;
   followersCount?: number;
@@ -19,6 +20,7 @@ export async function upsertInstagramAccount(data: {
   return prisma.instagramAccount.upsert({
     where: { instagramUserId: data.instagramUserId },
     update: {
+      instagramBusinessAccountId: data.instagramBusinessAccountId,
       username: data.username,
       profilePictureUrl: data.profilePictureUrl,
       followersCount: data.followersCount,

@@ -130,6 +130,23 @@ export class InstagramClient {
       return false;
     }
   }
+
+  /**
+   * Get Instagram Business Account ID
+   * Only available for Business/Creator accounts
+   * Returns null if not a business account or if ID cannot be fetched
+   */
+  async getBusinessAccountId(): Promise<string | null> {
+    try {
+      const response = await this.request<{ instagram_business_account?: { id: string } }>(
+        `/me?fields=instagram_business_account&access_token=${this.accessToken}`
+      );
+      return response.instagram_business_account?.id || null;
+    } catch (error) {
+      console.error('Failed to get business account ID:', error);
+      return null;
+    }
+  }
 }
 
 /**
