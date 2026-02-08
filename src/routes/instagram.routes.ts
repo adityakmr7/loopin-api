@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { authMiddleware } from '@/middleware/auth.middleware';
+import { config } from '@/config/env';
 import {
   connectInstagramAccount,
   getUserInstagramAccounts,
@@ -89,11 +90,11 @@ instagram.get('/callback', zValidator('query', oauthCallbackSchema), async (c) =
     const account = await connectInstagramAccount(userId, code);
 
     // Redirect to frontend dashboard on success
-    return c.redirect('http://localhost:3001/dashboard?instagram_connected=true');
+    return c.redirect(`${config.app.frontendUrl}/dashboard?instagram_connected=true`);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to connect Instagram account';
     // Redirect to frontend with error
-    return c.redirect(`http://localhost:3001/dashboard?error=${encodeURIComponent(message)}`);
+    return c.redirect(`${config.app.frontendUrl}/dashboard?error=${encodeURIComponent(message)}`);
   }
 });
 
@@ -196,6 +197,83 @@ instagram.post('/accounts/:id/disconnect', authMiddleware, zValidator('param', a
     const response: ApiResponse = {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to disconnect account',
+    };
+    return c.json(response, 500);
+  }
+});
+
+/**
+ * GET /api/instagram/accounts/:id/growth
+ * Get growth statistics for Instagram account (protected)
+ */
+instagram.get('/accounts/:id/growth', authMiddleware, zValidator('param', accountIdSchema), async (c) => {
+  const { id } = c.req.valid('param');
+  const days = parseInt(c.req.query('days') || '30', 10);
+
+  try {
+    const { getGrowthStats } = await import('@/services/instagram-snapshot.service');
+    const stats = await getGrowthStats(id, days);
+
+    if (!stats) {
+      const response: ApiResponse = {
+        success: false,
+        error: 'No growth data available. Snapshots will be created automatically.',
+      };
+      return c.json(response, 404);
+    }
+
+    const response: ApiResponse = {
+      success: true,
+      data: stats,
+    };
+
+    return c.json(response);
+  } catch (error) {
+    const response: ApiResponse = {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to fetch growth statistics',
+    };
+    return c.json(response, 500);
+  }
+});
+
+/**
+ * POST /api/instagram/accounts/:id/snapshot
+ * Manually create a snapshot of current metrics (protected)
+ */
+instagram.post('/accounts/:id/snapshot', authMiddleware, zValidator('param', accountIdSchema), async (c) => {
+  const { id } = c.req.valid('param');
+
+  try {
+    const { createInstagramClient } = await import('@/lib/instagram-client');
+    const { getDecryptedAccessToken } = await import('@/services/instagram-account.service');
+    const { createAccountSnapshot } = await import('@/services/instagram-snapshot.service');
+
+    const accessToken = await getDecryptedAccessToken(id);
+    if (!accessToken) {
+      throw new Error('Access token not found');
+    }
+
+    const client = createInstagramClient(accessToken);
+    const profile = await client.getUserProfile();
+
+    const snapshot = await createAccountSnapshot(id, {
+      followersCount: profile.followers_count || 0,
+      followingCount: profile.follows_count || 0,
+      mediaCount: profile.media_count || 0,
+    });
+
+    const response: ApiResponse = {
+      success: true,
+      message: 'Snapshot created successfully',
+      data: snapshot,
+    };
+
+    return c.json(response);
+  } catch (error) {
+    const response: ApiResponse = {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to create snapshot',
     };
     return c.json(response, 500);
   }
