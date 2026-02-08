@@ -1,9 +1,9 @@
 {
   "info": {
     "name": "Loopin API - Instagram Automation",
-    "description": "Complete API collection for Loopin Instagram Automation SaaS platform using Instagram API with Instagram Login (no Facebook Page required). Includes user authentication, Instagram OAuth, account management, and webhook endpoints.",
+    "description": "Complete API collection for Loopin Instagram Automation SaaS platform using Instagram API with Instagram Login (no Facebook Page required). Includes user authentication, Instagram OAuth, account management, growth tracking with historical analytics, and webhook endpoints.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "version": "2.0.0"
+    "version": "2.1.0"
   },
   "auth": {
     "type": "bearer",
@@ -447,6 +447,61 @@
           "response": []
         },
         {
+          "name": "Get Growth Statistics",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/instagram/accounts/{{instagramAccountId}}/growth?days=30",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "instagram", "accounts", "{{instagramAccountId}}", "growth"],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "30",
+                  "description": "Number of days to analyze (default: 30)"
+                }
+              ]
+            },
+            "description": "Get growth statistics for an Instagram account over a specified time period. Returns follower/following growth, percentage changes, and historical snapshots for charting. Requires at least 2 snapshots to calculate growth."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Snapshot",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/instagram/accounts/{{instagramAccountId}}/snapshot",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "instagram", "accounts", "{{instagramAccountId}}", "snapshot"]
+            },
+            "description": "Manually create a snapshot of current Instagram account metrics (followers, following, media count). Snapshots are automatically created daily at 3 AM, but you can use this endpoint to create them on-demand for testing or immediate updates."
+          },
+          "response": []
+        },
+        {
           "name": "Disconnect Account",
           "request": {
             "auth": {
@@ -471,7 +526,7 @@
           "response": []
         }
       ],
-      "description": "Instagram account management endpoints"
+      "description": "Instagram account management endpoints including follower/following counts and growth tracking with historical analytics"
     },
     {
       "name": "Instagram Webhooks",

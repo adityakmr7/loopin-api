@@ -35,7 +35,9 @@ app.route('/api/automation', automationRoutes);
 
 // Start scheduled jobs
 import { scheduleTokenRefreshJob } from '@/jobs/token-refresh.job';
+import { scheduleSnapshotJob } from '@/jobs/snapshot.job';
 scheduleTokenRefreshJob();
+scheduleSnapshotJob();
 
 // Root endpoint
 app.get('/', (c) => {

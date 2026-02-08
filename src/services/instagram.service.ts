@@ -67,6 +67,8 @@ export async function connectInstagramAccount(
     instagramUserId: profile.id,
     username: profile.username,
     mediaCount: profile.media_count,
+    followersCount: profile.followers_count,
+    followingCount: profile.follows_count,
     isBusinessAccount: profile.account_type === 'BUSINESS' || profile.account_type === 'MEDIA_CREATOR',
   });
 
@@ -104,6 +106,8 @@ export async function refreshAccountData(accountId: string): Promise<InstagramAc
     instagramUserId: profile.id,
     username: profile.username,
     mediaCount: profile.media_count,
+    followersCount: profile.followers_count,
+    followingCount: profile.follows_count,
     isBusinessAccount: profile.account_type === 'BUSINESS' || profile.account_type === 'MEDIA_CREATOR',
   });
 }

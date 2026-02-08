@@ -15,6 +15,8 @@ export interface InstagramUserData {
   username: string;
   account_type?: 'BUSINESS' | 'MEDIA_CREATOR' | 'PERSONAL';
   media_count?: number;
+  followers_count?: number;
+  follows_count?: number;
 }
 
 export interface InstagramMedia {
@@ -85,9 +87,10 @@ export class InstagramClient {
   /**
    * Get user profile information
    * Using Instagram Login - direct /me endpoint (no Facebook Pages required)
+   * Note: followers_count and follows_count only available for Business/Creator accounts
    */
   async getUserProfile(): Promise<InstagramUserData> {
-    const fields = 'id,username,account_type,media_count';
+    const fields = 'id,username,account_type,media_count,followers_count,follows_count';
     return this.request<InstagramUserData>(
       `/me?fields=${fields}&access_token=${this.accessToken}`
     );

@@ -54,15 +54,31 @@ model InstagramAccount {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  user     User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tokens   InstagramToken?
-  events   WebhookEvent[]
-  comments InstagramComment[]
+  user            User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokens          InstagramToken?
+  events          WebhookEvent[]
+  comments        InstagramComment[]
   automationRules AutomationRule[]
+  snapshots       InstagramAccountSnapshot[]
 
   @@index([userId])
   @@index([instagramUserId])
   @@map("instagram_accounts")
+}
+
+model InstagramAccountSnapshot {
+  id             String   @id @default(cuid())
+  accountId      String
+  followersCount Int
+  followingCount Int
+  mediaCount     Int
+  createdAt      DateTime @default(now())
+
+  account InstagramAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@index([accountId, createdAt])
+  @@map("instagram_account_snapshots")
 }
 
 model InstagramToken {
