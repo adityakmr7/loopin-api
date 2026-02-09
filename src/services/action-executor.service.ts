@@ -10,17 +10,30 @@ export async function executeActions(
 
   // Reply to comment
   if (actions.reply) {
-    await replyToComment(commentId, accountId, actions.reply);
+    try {
+      await replyToComment(commentId, accountId, actions.reply);
+    } catch (error) {
+      console.error(`❌ Failed to reply:`, error instanceof Error ? error.message : error);
+    }
   }
 
   // Like comment
   if (actions.like) {
-    await likeComment(commentId, accountId);
+    try {
+      await likeComment(commentId, accountId);
+    } catch (error) {
+      console.error(`❌ Failed to like:`, error instanceof Error ? error.message : error);
+      // Instagram API often doesn't support liking comments, so we continue
+    }
   }
 
   // Hide comment
   if (actions.hide) {
-    await hideComment(commentId, accountId);
+    try {
+      await hideComment(commentId, accountId);
+    } catch (error) {
+      console.error(`❌ Failed to hide:`, error instanceof Error ? error.message : error);
+    }
   }
 }
 
