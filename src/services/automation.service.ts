@@ -35,7 +35,7 @@ export async function processCommentAutomation(
     try {
       console.log(`📋 Executing rule: ${rule.name}`);
       
-      await executeActions(comment.commentId, accountId, rule.actions);
+      await executeActions(comment.commentId, accountId, rule.actions, rule.userId);
       
       // Update rule stats
       const actions = rule.actions as { reply?: string; like?: boolean; hide?: boolean };

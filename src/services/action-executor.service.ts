@@ -1,17 +1,48 @@
+import { getOrCreateSettings } from '@/services/settings.service';
+import { canReply, recordReply } from '@/services/rate-guard.service';
+
+/**
+ * Sleep for a random number of milliseconds between min and max.
+ */
+function randomDelay(minSecs: number, maxSecs: number): Promise<void> {
+  const ms = (Math.floor(Math.random() * (maxSecs - minSecs + 1)) + minSecs) * 1000;
+  console.log(`⏳ Waiting ${ms}ms before executing action (human-like delay)...`);
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 /**
  * Execute rule actions
  */
 export async function executeActions(
   commentId: string,
   accountId: string,
-  actions: any
+  actions: any,
+  userId: string
 ): Promise<void> {
   console.log(`🎬 Executing actions for comment ${commentId}`);
+
+  // Load user settings
+  const settings = await getOrCreateSettings(userId);
+
+  // Per-account rate limit check
+  if (!canReply(accountId, settings.maxRepliesPerHour)) {
+    console.warn(
+      `🚫 Rate limit reached for account ${accountId} — ` +
+      `max ${settings.maxRepliesPerHour} replies/hour. Skipping.`
+    );
+    return;
+  }
+
+  // Human-like delay before any action
+  if (settings.replyDelayMaxSecs > 0) {
+    await randomDelay(settings.replyDelayMinSecs, settings.replyDelayMaxSecs);
+  }
 
   // Reply to comment
   if (actions.reply) {
     try {
       await replyToComment(commentId, accountId, actions.reply);
+      recordReply(accountId);
     } catch (error) {
       console.error(`❌ Failed to reply:`, error instanceof Error ? error.message : error);
     }

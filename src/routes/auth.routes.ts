@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { authMiddleware } from '@/middleware/auth.middleware';
-import { register, login, refreshAccessToken, logout } from '@/services/auth.service';
+import { register, login, refreshAccessToken, logout, logoutAll } from '@/services/auth.service';
 import { findUserById } from '@/services/user.service';
 import {
   registerSchema,
@@ -145,6 +145,74 @@ auth.get('/me', authMiddleware, async (c) => {
       error: error instanceof Error ? error.message : 'Failed to get user',
     };
     return c.json(response, 500);
+  }
+});
+
+/**
+ * GET /api/auth/sessions
+ * List all active refresh tokens (sessions) for the current user
+ */
+auth.get('/sessions', authMiddleware, async (c) => {
+  const { userId } = c.get('user');
+
+  try {
+    const { prisma } = await import('@/config/database');
+    const sessions = await prisma.refreshToken.findMany({
+      where: { userId, expiresAt: { gt: new Date() } },
+      select: { id: true, createdAt: true, expiresAt: true },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return c.json({ success: true, data: sessions });
+  } catch (error) {
+    return c.json(
+      { success: false, error: error instanceof Error ? error.message : 'Failed to fetch sessions' },
+      500
+    );
+  }
+});
+
+/**
+ * DELETE /api/auth/sessions
+ * Revoke all sessions (logout from all devices)
+ */
+auth.delete('/sessions', authMiddleware, async (c) => {
+  const { userId } = c.get('user');
+
+  try {
+    await logoutAll(userId);
+    return c.json({ success: true, message: 'All sessions revoked' });
+  } catch (error) {
+    return c.json(
+      { success: false, error: error instanceof Error ? error.message : 'Failed to revoke sessions' },
+      500
+    );
+  }
+});
+
+/**
+ * DELETE /api/auth/sessions/:id
+ * Revoke a specific session by refresh token DB id
+ */
+auth.delete('/sessions/:id', authMiddleware, async (c) => {
+  const { userId } = c.get('user');
+  const { id } = c.req.param();
+
+  try {
+    const { prisma } = await import('@/config/database');
+    const token = await prisma.refreshToken.findFirst({ where: { id, userId } });
+
+    if (!token) {
+      return c.json({ success: false, error: 'Session not found' }, 404);
+    }
+
+    await prisma.refreshToken.delete({ where: { id } });
+    return c.json({ success: true, message: 'Session revoked' });
+  } catch (error) {
+    return c.json(
+      { success: false, error: error instanceof Error ? error.message : 'Failed to revoke session' },
+      500
+    );
   }
 });
 

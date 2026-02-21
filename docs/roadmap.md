@@ -10,7 +10,7 @@
 - Instagram OAuth account connection (Business/Creator accounts)
 - Automation rule engine: comment, mention, message triggers
 - Keyword-based condition matching
-- Reply-to-comment and auto-like actions
+- Reply-to-comment, auto-like, and hide-comment actions
 - Real-time webhook processing (Meta Graph API)
 - Analytics overview (triggers, replies, likes, daily chart, top rules)
 - Dashboard summary
@@ -20,17 +20,17 @@
 
 ---
 
-## 🔄 v1.1.0 — Safety & Settings *(Next)*
+## ✅ v1.1.0 — Safety & Settings (Shipped)
 
 **Goal:** Protect users from Instagram bans and improve personalization.
 
-- [ ] `UserSettings` model — timezone, notification prefs, safety limits
-- [ ] Blacklisted keywords (never trigger automation on these)
-- [ ] Ignored usernames (skip automation for specific accounts)
-- [ ] Max replies per hour rate limiter (per account)
-- [ ] Human-like reply delay (configurable 5–60s range)
-- [ ] Instagram token expiry email warning (cron alert)
-- [ ] Active session management (view + revoke all refresh tokens)
+- [x] `UserSettings` model — timezone, notification prefs, safety limits
+- [x] Blacklisted keywords (never trigger automation on these)
+- [x] Ignored usernames (skip automation for specific accounts)
+- [x] Max replies per hour rate limiter (per account)
+- [x] Human-like reply delay (configurable 5–60s range)
+- [x] Instagram token expiry email warning (cron alert)
+- [x] Active session management (view + revoke all refresh tokens)
 
 ---
 

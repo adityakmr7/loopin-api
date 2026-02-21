@@ -11,6 +11,7 @@ import instagramRoutes from '@/routes/instagram.routes';
 import instagramWebhooks from '@/routes/instagram-webhooks.routes';
 import automationRoutes from '@/routes/automation.routes';
 import analyticsRoutes from '@/routes/analytics.routes';
+import settingsRoutes from '@/routes/settings.routes';
 
 const app = new Hono();
 
@@ -36,12 +37,15 @@ app.route('/api/instagram', instagramRoutes);
 app.route('/api/instagram/webhooks', instagramWebhooks);
 app.route('/api/automation', automationRoutes);
 app.route('/api/analytics', analyticsRoutes);
+app.route('/api/settings', settingsRoutes);
 
 // Start scheduled jobs
 import { scheduleTokenRefreshJob } from '@/jobs/token-refresh.job';
 import { scheduleSnapshotJob } from '@/jobs/snapshot.job';
+import { scheduleTokenExpiryAlertJob } from '@/jobs/token-expiry-alert.job';
 scheduleTokenRefreshJob();
 scheduleSnapshotJob();
+scheduleTokenExpiryAlertJob();
 
 // Root endpoint
 app.get('/', (c) => {

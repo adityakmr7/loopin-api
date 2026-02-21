@@ -12,11 +12,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > Features planned for the next release. See [roadmap.md](./roadmap.md) for full details.
 
 ### Planned
-- `UserSettings` model for timezone, notification preferences, and safety limits
-- Blacklisted keywords and ignored usernames per account
-- Max replies per hour rate limiter
-- Instagram token expiry email alerts
-- Comment → DM automation action type
+- Comment → DM automation (`comment_to_dm` action type)
+- Automation rule templates library
+- Story mention/reply trigger
+
+---
+
+## [1.1.0] — 2026-02-21
+
+### Added
+
+#### ⚙️ User Settings
+- `UserSettings` model (1-to-1 with `User`) with full cascade delete
+- `GET /api/settings` 🔒 — returns settings, auto-creates defaults on first call
+- `PATCH /api/settings` 🔒 — partial update with Zod validation
+- Fields: `timezone`, `maxRepliesPerHour`, `replyDelayMinSecs`, `replyDelayMaxSecs`, `blockedKeywords`, `ignoredUsernames`, `notifyOnTokenExpiry`, `notifyOnRuleFailure`
+
+#### 🛡️ Safety Enforcement
+- **Blocked keywords** — automation skips entirely if comment text contains any keyword in `blockedKeywords`
+- **Ignored usernames** — automation skips entirely if commenter is in `ignoredUsernames`
+- **Human-like reply delay** — random sleep between `replyDelayMinSecs` and `replyDelayMaxSecs` before any action fires
+- **Per-account rate guard** — in-memory hourly counter prevents exceeding `maxRepliesPerHour`; resets automatically each hour
+
+#### 🔔 Token Expiry Alerts
+- `token-expiry-alert.job.ts` — daily cron (9 AM) checks tokens expiring within 7 days
+- `notification.service.ts` — structured notification layer (console now, email-ready)
+- Respects `notifyOnTokenExpiry` user preference
+
+#### 🔐 Session Management
+- `GET /api/auth/sessions` 🔒 — list all active (non-expired) refresh tokens
+- `DELETE /api/auth/sessions` 🔒 — revoke all sessions (logout all devices)
+- `DELETE /api/auth/sessions/:id` 🔒 — revoke a single session by token ID
 
 ---
 
@@ -51,7 +77,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `PATCH /api/automation/rules/:id` — Partial update (all fields optional)
 - `DELETE /api/automation/rules/:id` — Delete rule
 - Supported triggers: `"comment"`, `"mention"`, `"message"`
-- Flexible `conditions` (keyword matching) and `actions` (reply, like) as JSON
+- Flexible `conditions` (keyword matching) and `actions` (reply, like, **hide**) as JSON
+- `actions.hide: true` hides a comment via Instagram Graph API
 - `triggerCount`, `replyCount`, `likeCount` counters per rule
 - `lastTriggered` timestamp tracking
 

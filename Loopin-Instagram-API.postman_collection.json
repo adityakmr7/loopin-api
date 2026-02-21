@@ -253,6 +253,67 @@
             "description": "Logout and invalidate refresh token"
           },
           "response": []
+        },
+        {
+          "name": "List Sessions",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/sessions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "sessions"]
+            },
+            "description": "List all active (non-expired) refresh token sessions for the current user. Returns session id, createdAt, and expiresAt for each."
+          },
+          "response": []
+        },
+        {
+          "name": "Revoke All Sessions",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/sessions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "sessions"]
+            },
+            "description": "Revoke all active sessions — logs the user out from every device. The current access token remains valid until it expires (15m), but no refresh will be possible."
+          },
+          "response": []
+        },
+        {
+          "name": "Revoke Session by ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/sessions/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "sessions", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "SESSION_ID",
+                  "description": "The refresh token DB id from GET /api/auth/sessions"
+                }
+              ]
+            },
+            "description": "Revoke a single session by its token ID. Use GET /api/auth/sessions first to find the session ID."
+          },
+          "response": []
         }
       ],
       "description": "User authentication endpoints"
@@ -1036,6 +1097,70 @@
               ]
             },
             "description": "Expects 404 — no account with this ID exists in the database."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Settings",
+      "description": "User settings endpoints. Controls safety limits, automation preferences, and notification preferences. Settings are auto-created with defaults on first GET.",
+      "item": [
+        {
+          "name": "Get Settings",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('has maxRepliesPerHour', () => pm.expect(pm.response.json().data).to.have.property('maxRepliesPerHour'));",
+                  "pm.test('has blockedKeywords', () => pm.expect(pm.response.json().data.blockedKeywords).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/settings",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "settings"]
+            },
+            "description": "Get user settings. Auto-creates defaults on first call.\n\nDefault values:\n  timezone: UTC\n  maxRepliesPerHour: 30\n  replyDelayMinSecs: 5\n  replyDelayMaxSecs: 30\n  blockedKeywords: []\n  ignoredUsernames: []\n  notifyOnTokenExpiry: true\n  notifyOnRuleFailure: false"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Settings",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"timezone\": \"Asia/Kolkata\",\n  \"maxRepliesPerHour\": 20,\n  \"replyDelayMinSecs\": 10,\n  \"replyDelayMaxSecs\": 45,\n  \"blockedKeywords\": [\"spam\", \"follow back\", \"follow4follow\"],\n  \"ignoredUsernames\": [\"competitor_account\"],\n  \"notifyOnTokenExpiry\": true,\n  \"notifyOnRuleFailure\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/settings",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "settings"]
+            },
+            "description": "Partially update user settings. All fields are optional.\n\nSafety notes:\n- replyDelayMinSecs must be <= replyDelayMaxSecs (returns 400 otherwise)\n- maxRepliesPerHour: 1–500\n- blockedKeywords: any comment containing these words will skip automation entirely\n- ignoredUsernames: comments from these accounts will skip automation entirely"
           },
           "response": []
         }

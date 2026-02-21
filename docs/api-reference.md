@@ -84,6 +84,31 @@ Get the currently authenticated user.
 
 ---
 
+### `GET /api/auth/sessions` 🔒
+List all active (non-expired) sessions for the current user.
+
+**Response `200`:**
+```json
+{
+  "success": true,
+  "data": [
+    { "id": "...", "createdAt": "2026-02-21T...", "expiresAt": "2026-02-28T..." }
+  ]
+}
+```
+
+---
+
+### `DELETE /api/auth/sessions` 🔒
+Revoke all sessions — logs out from every device.
+
+---
+
+### `DELETE /api/auth/sessions/:id` 🔒
+Revoke a single session by its token ID.
+
+---
+
 ## Instagram — `/api/instagram`
 
 ### `GET /api/instagram/auth` 🔒
@@ -199,3 +224,49 @@ Meta webhook verification endpoint (hub challenge).
 Receives and processes real-time Instagram events (comments, mentions, messages).
 
 > ⚠️ This endpoint is called by Meta's servers, not your frontend. It does not require user auth.
+
+---
+
+## Settings — `/api/settings`
+
+### `GET /api/settings` 🔒
+Get user settings. Auto-creates defaults on first call.
+
+**Response `200`:**
+```json
+{
+  "success": true,
+  "data": {
+    "timezone": "UTC",
+    "maxRepliesPerHour": 30,
+    "replyDelayMinSecs": 5,
+    "replyDelayMaxSecs": 30,
+    "blockedKeywords": [],
+    "ignoredUsernames": [],
+    "notifyOnTokenExpiry": true,
+    "notifyOnRuleFailure": false
+  }
+}
+```
+
+---
+
+### `PATCH /api/settings` 🔒
+Partially update user settings. All fields optional.
+
+**Body (all optional):**
+```json
+{
+  "timezone": "Asia/Kolkata",
+  "maxRepliesPerHour": 20,
+  "replyDelayMinSecs": 10,
+  "replyDelayMaxSecs": 45,
+  "blockedKeywords": ["spam", "follow back"],
+  "ignoredUsernames": ["competitor_account"],
+  "notifyOnTokenExpiry": true,
+  "notifyOnRuleFailure": false
+}
+```
+
+> **Note:** `replyDelayMinSecs` must be ≤ `replyDelayMaxSecs` or a 400 is returned.
+
