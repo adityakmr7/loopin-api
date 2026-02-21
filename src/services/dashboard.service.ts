@@ -1,5 +1,21 @@
 import { prisma } from '@/config/database';
 
+interface Interaction {
+  id: string;
+  commenter: {
+    username: string;
+  };
+  comment: {
+    text: string;
+    timestamp: Date;
+  };
+  reply: {
+    sent: boolean;
+    text: string | null;
+    repliedAt: Date | null;
+  };
+}
+
 interface DashboardStats {
   activeRules: number;
   eventsProcessed: {
@@ -10,12 +26,7 @@ interface DashboardStats {
     total: number;
     period: string;
   };
-  recentActivity: Array<{
-    id: string;
-    type: string;
-    description: string;
-    timestamp: Date;
-  }>;
+  recentInteractions: Interaction[];
 }
 
 /**
@@ -25,7 +36,7 @@ export async function getDashboardStats(accountId: string): Promise<DashboardSta
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
   // Run all queries in parallel for performance
-  const [activeRules, eventsProcessed, autoReplies, recentEvents] = await Promise.all([
+  const [activeRules, eventsProcessed, autoReplies, recentComments] = await Promise.all([
     // Count active automation rules
     prisma.automationRule.count({
       where: {
@@ -45,65 +56,52 @@ export async function getDashboardStats(accountId: string): Promise<DashboardSta
       },
     }),
 
-    // Count auto replies (comment events that were processed)
-    prisma.webhookEvent.count({
+    // Count auto replies sent (comments we replied to)
+    prisma.instagramComment.count({
       where: {
         accountId,
-        eventType: 'comments',
-        processed: true,
+        replied: true,
       },
     }),
 
-    // Get recent webhook events for activity feed
-    prisma.webhookEvent.findMany({
+    // Get recent comment interactions with full detail
+    prisma.instagramComment.findMany({
       where: {
         accountId,
-        processed: true,
+        isReply: false, // Only top-level comments, not our own reply threads
       },
       orderBy: {
-        createdAt: 'desc',
+        timestamp: 'desc',
       },
-      take: 10,
+      take: 20,
       select: {
         id: true,
-        eventType: true,
-        payload: true,
-        createdAt: true,
+        username: true,
+        text: true,
+        timestamp: true,
+        replied: true,
+        replyText: true,
+        repliedAt: true,
       },
     }),
   ]);
 
-  // Format recent activity
-  const recentActivity = recentEvents.map((event) => {
-    const payload = event.payload as any;
-    // Payload is stored as { field, value } — username lives at payload.value.from.username
-    const from = payload.value?.from || payload.from;
-    const username = from?.username || from?.id || null;
-    const displayName = username ? `@${username}` : 'someone';
-    let description = '';
-
-    switch (event.eventType) {
-      case 'comments':
-        description = `New comment from ${displayName}`;
-        break;
-      case 'mentions':
-        description = `Mentioned by ${displayName}`;
-        break;
-      case 'messages':
-        description = `New message from ${displayName}`;
-        break;
-      default:
-        description = `${event.eventType} event received`;
-    }
-
-    return {
-      id: event.id,
-      type: event.eventType,
-      description,
-      username: username ?? null,
-      timestamp: event.createdAt,
-    };
-  });
+  // Map to clean interaction shape
+  const recentInteractions: Interaction[] = recentComments.map((comment) => ({
+    id: comment.id,
+    commenter: {
+      username: comment.username,
+    },
+    comment: {
+      text: comment.text,
+      timestamp: comment.timestamp,
+    },
+    reply: {
+      sent: comment.replied,
+      text: comment.replyText ?? null,
+      repliedAt: comment.repliedAt ?? null,
+    },
+  }));
 
   return {
     activeRules,
@@ -115,9 +113,11 @@ export async function getDashboardStats(accountId: string): Promise<DashboardSta
       total: autoReplies,
       period: 'all_time',
     },
-    recentActivity,
+    recentInteractions,
   };
 }
+
+
 
 /**
  * Get overview stats for all connected accounts
