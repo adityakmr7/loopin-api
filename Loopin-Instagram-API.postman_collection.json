@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Loopin API - Instagram Automation",
-    "description": "Complete API collection for Loopin Instagram Automation SaaS platform using Instagram API with Instagram Login (no Facebook Page required). Includes user authentication, Instagram OAuth, account management, growth tracking with historical analytics, and webhook endpoints.",
+    "description": "Complete API collection for Loopin Instagram Automation SaaS platform. Includes user authentication, Instagram OAuth, account management, growth tracking, automation rules, and analytics.\n\n🌱 Seed credentials:\n  Email: test@example.com\n  Password: password123\n  AccountId: cmltqc8r00000prv0s3beagy6",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "version": "2.1.0"
   },
@@ -33,7 +33,8 @@
     },
     {
       "key": "instagramAccountId",
-      "value": "",
+      "value": "cmltqc8r00000prv0s3beagy6",
+      "description": "Seeded test account ID — update after connecting a real account",
       "type": "string"
     }
   ],
@@ -815,6 +816,230 @@
         }
       ],
       "description": "Automation rule management endpoints"
+    },
+    {
+      "name": "Analytics",
+      "description": "Automation analytics endpoints. Returns trigger/reply/like metrics for a given Instagram account over a time window.\n\nAll requests use the {{instagramAccountId}} and {{accessToken}} collection variables — run 'Login' first to populate the token.",
+      "item": [
+        {
+          "name": "Overview — 30d (seed data)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('success flag', () => pm.expect(pm.response.json().success).to.be.true);",
+                  "pm.test('has summary', () => pm.expect(pm.response.json().data).to.have.property('summary'));",
+                  "pm.test('has chart', () => pm.expect(pm.response.json().data.chart).to.be.an('array').with.length(30));",
+                  "pm.test('has topRules', () => pm.expect(pm.response.json().data.topRules).to.be.an('array'));",
+                  "pm.test('has triggerBreakdown', () => pm.expect(pm.response.json().data).to.have.property('triggerBreakdown'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/analytics/overview?accountId={{instagramAccountId}}&period=30d",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "analytics", "overview"],
+              "query": [
+                {"key": "accountId", "value": "{{instagramAccountId}}", "description": "Instagram account ID (our internal DB id)"},
+                {"key": "period", "value": "30d", "description": "Time window: 7d | 30d | 90d"}
+              ]
+            },
+            "description": "Fetch automation analytics for the last 30 days. Uses the seeded account ID.\n\nSuccess response shape:\n{\n  summary: { totalTriggers, totalRepliesSent, totalLikes, replyRate },\n  chart: [{ date, triggers, replies, likes }],    // one entry per day\n  topRules: [{ id, name, trigger, triggerCount, replyCount, likeCount, lastTriggered }],\n  triggerBreakdown: { comment, mention }\n}"
+          },
+          "response": []
+        },
+        {
+          "name": "Overview — 7d",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/analytics/overview?accountId={{instagramAccountId}}&period=7d",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "analytics", "overview"],
+              "query": [
+                {"key": "accountId", "value": "{{instagramAccountId}}"},
+                {"key": "period", "value": "7d"}
+              ]
+            },
+            "description": "Analytics for the last 7 days. Chart will have exactly 7 entries."
+          },
+          "response": []
+        },
+        {
+          "name": "Overview — 90d",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/analytics/overview?accountId={{instagramAccountId}}&period=90d",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "analytics", "overview"],
+              "query": [
+                {"key": "accountId", "value": "{{instagramAccountId}}"},
+                {"key": "period", "value": "90d"}
+              ]
+            },
+            "description": "Analytics for the last 90 days. Chart will have exactly 90 entries. Seed data only covers 30 days so days 31–90 will show 0."
+          },
+          "response": []
+        },
+        {
+          "name": "Overview — 400 Missing period",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('success false', () => pm.expect(pm.response.json().success).to.be.false);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/analytics/overview?accountId={{instagramAccountId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "analytics", "overview"],
+              "query": [
+                {"key": "accountId", "value": "{{instagramAccountId}}"},
+                {"key": "period", "value": "", "disabled": true}
+              ]
+            },
+            "description": "Expects 400 — period query param is missing."
+          },
+          "response": []
+        },
+        {
+          "name": "Overview — 400 Invalid period",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('success false', () => pm.expect(pm.response.json().success).to.be.false);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/analytics/overview?accountId={{instagramAccountId}}&period=1year",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "analytics", "overview"],
+              "query": [
+                {"key": "accountId", "value": "{{instagramAccountId}}"},
+                {"key": "period", "value": "1year"}
+              ]
+            },
+            "description": "Expects 400 — \"1year\" is not a valid period. Only \"7d\", \"30d\", \"90d\" are accepted."
+          },
+          "response": []
+        },
+        {
+          "name": "Overview — 403 Wrong account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 403', () => pm.response.to.have.status(403));",
+                  "pm.test('success false', () => pm.expect(pm.response.json().success).to.be.false);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/analytics/overview?accountId=another-users-account-id&period=30d",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "analytics", "overview"],
+              "query": [
+                {"key": "accountId", "value": "another-users-account-id", "description": "Replace with an account ID that belongs to a different user"},
+                {"key": "period", "value": "30d"}
+              ]
+            },
+            "description": "Expects 403 — the account exists but is owned by a different user."
+          },
+          "response": []
+        },
+        {
+          "name": "Overview — 404 Account not found",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));",
+                  "pm.test('success false', () => pm.expect(pm.response.json().success).to.be.false);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/analytics/overview?accountId=nonexistent-account-id&period=30d",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "analytics", "overview"],
+              "query": [
+                {"key": "accountId", "value": "nonexistent-account-id"},
+                {"key": "period", "value": "30d"}
+              ]
+            },
+            "description": "Expects 404 — no account with this ID exists in the database."
+          },
+          "response": []
+        }
+      ]
     }
   ]
 }

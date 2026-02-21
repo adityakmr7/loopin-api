@@ -38,10 +38,13 @@ export async function processCommentAutomation(
       await executeActions(comment.commentId, accountId, rule.actions);
       
       // Update rule stats
+      const actions = rule.actions as { reply?: string; like?: boolean; hide?: boolean };
       await prisma.automationRule.update({
         where: { id: rule.id },
         data: {
           triggerCount: { increment: 1 },
+          replyCount: { increment: actions.reply ? 1 : 0 },
+          likeCount: { increment: actions.like ? 1 : 0 },
           lastTriggered: new Date(),
         },
       });

@@ -152,7 +152,9 @@ model AutomationRule {
   trigger      String    // "comment", "mention", "message"
   conditions   Json      // Flexible conditions
   actions      Json      // Flexible actions
-  triggerCount Int       @default(0)
+  triggerCount  Int       @default(0)
+  replyCount    Int       @default(0)
+  likeCount     Int       @default(0)
   lastTriggered DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
