@@ -1,5 +1,6 @@
 import { prisma } from '../src/config/database';
 import { hash } from 'bcryptjs';
+import { createHash } from 'crypto';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -13,6 +14,10 @@ function daysAgo(days: number, offsetHours = 0): Date {
 
 function randomInt(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function buildSeedEventHash(accountId: string, sourceId: string): string {
+  return createHash('sha256').update(`${accountId}:${sourceId}`).digest('hex');
 }
 
 // ─── main ───────────────────────────────────────────────────────────────────
@@ -157,6 +162,7 @@ async function main() {
         eventType: 'comments',
         instagramUserId: `seed_user_${day}_${i}`,
         accountId: account.id,
+        eventHash: buildSeedEventHash(account.id, `comments:${day}:${i}`),
         payload: { from: { id: `seed_user_${day}_${i}`, username: `user_${day}_${i}` }, text: 'Great product!', media: { id: 'media_001' } },
         processed: true,
         processedAt: daysAgo(day, randomInt(0, 23)),
@@ -169,6 +175,7 @@ async function main() {
         eventType: 'mentions',
         instagramUserId: `seed_mention_${day}_${i}`,
         accountId: account.id,
+        eventHash: buildSeedEventHash(account.id, `mentions:${day}:${i}`),
         payload: { from: { id: `seed_mention_${day}_${i}`, username: `fan_${day}_${i}` }, text: `Love @testbrand!`, media: { id: 'media_002' } },
         processed: true,
         processedAt: daysAgo(day, randomInt(0, 23)),

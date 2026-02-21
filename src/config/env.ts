@@ -12,6 +12,7 @@ const envSchema = z.object({
   ALLOWED_ORIGINS: z.string().default('http://localhost:3000'),
   RATE_LIMIT_WINDOW_MS: z.string().default('900000'),
   RATE_LIMIT_MAX_REQUESTS: z.string().default('100'),
+  REDIS_URL: z.string().min(1).default('redis://localhost:6379'),
   INSTAGRAM_APP_ID: z.string().min(1),
   INSTAGRAM_APP_SECRET: z.string().min(1),
   INSTAGRAM_REDIRECT_URI: z.string().url(),
@@ -55,6 +56,9 @@ export const config = {
   rateLimit: {
     windowMs: parseInt(env.RATE_LIMIT_WINDOW_MS, 10),
     maxRequests: parseInt(env.RATE_LIMIT_MAX_REQUESTS, 10),
+  },
+  redis: {
+    url: env.REDIS_URL,
   },
   instagram: {
     appId: env.INSTAGRAM_APP_ID,

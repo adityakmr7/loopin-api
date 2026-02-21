@@ -1,4 +1,5 @@
 import { prisma } from '@/config/database';
+import { createHash } from 'crypto';
 import type { WebhookEvent } from '@prisma/client';
 
 /**
@@ -8,6 +9,7 @@ export async function storeWebhookEvent(data: {
   eventType: string;
   instagramUserId: string;
   accountId: string;
+  eventHash: string;
   payload: any;
 }): Promise<WebhookEvent> {
   return prisma.webhookEvent.create({
@@ -15,6 +17,7 @@ export async function storeWebhookEvent(data: {
       eventType: data.eventType,
       instagramUserId: data.instagramUserId,
       accountId: data.accountId,
+      eventHash: data.eventHash,
       payload: data.payload,
     },
   });
@@ -35,6 +38,49 @@ export async function markEventProcessed(
       error,
     },
   });
+}
+
+/**
+ * Record an event processing failure without marking it processed.
+ */
+export async function markEventFailed(
+  eventId: string,
+  error: string
+): Promise<void> {
+  await prisma.webhookEvent.update({
+    where: { id: eventId },
+    data: {
+      processed: false,
+      processedAt: null,
+      error,
+    },
+  });
+}
+
+/**
+ * Get event by ID
+ */
+export async function getEventById(eventId: string): Promise<WebhookEvent | null> {
+  return prisma.webhookEvent.findUnique({
+    where: { id: eventId },
+  });
+}
+
+/**
+ * Create a deterministic hash for idempotency from the event payload.
+ */
+export function computeWebhookEventHash(input: {
+  accountId: string;
+  field: string;
+  value: any;
+}): string {
+  const serialized = JSON.stringify({
+    accountId: input.accountId,
+    field: input.field,
+    value: input.value,
+  });
+
+  return createHash('sha256').update(serialized).digest('hex');
 }
 
 /**

@@ -55,6 +55,7 @@ export async function handleCommentEvent(
       commentId: comment.commentId,
       text: comment.text,
       username: comment.username,
+      instagramUserId: event.value.from.id, // needed for DM sending
     });
   } catch (error) {
     console.error('❌ Error processing comment:', error);

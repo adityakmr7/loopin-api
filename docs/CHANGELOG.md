@@ -11,12 +11,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > Features planned for the next release. See [roadmap.md](./roadmap.md) for full details.
 
+### Added
+- Queue infrastructure scaffold (Redis + BullMQ) for async webhook processing
+- Redis configuration wiring (`REDIS_URL`) and queue setup module
+- Webhook worker process for queued event handling
+- Webhook enqueueing in `/api/instagram/webhooks` (async ingestion)
+- Local Redis service in `docker-compose.yml`
+- Webhook signature verification (HMAC SHA-256 / SHA-1 fallback) for POST events in all environments
+- Webhook idempotency via deterministic `eventHash` on `WebhookEvent`
+- Redis-backed rate guards for replies and DMs
+- Distributed Redis locks for cron jobs (`token-refresh`, `snapshot`, `token-expiry-alert`)
+- Dead-letter queue routing and logging for webhook jobs that exhaust retry attempts
+
 ### Planned
-- Comment → DM automation (`comment_to_dm` action type)
-- Automation rule templates library
+- Automation rule templates library (`AutomationTemplate` model)
 - Story mention/reply trigger
+- Welcome DM for new followers
 
 ---
+
+## [1.2.0] — 2026-02-21
+
+### Added
+
+#### 💬 Comment → DM Automation
+- `comment_to_dm` action type on `AutomationRule.actions` — send a private DM when a user comments
+- `dm.service.ts` — `sendDM()` calls Instagram Graph API `POST /me/messages`; `sendCommentToDM()` orchestrates send + DB update
+- DM tracking fields on `InstagramComment`: `dmSent`, `dmText`, `dmSentAt`, `dmError`
+- Per-account DM rate guard — enforces Meta's ~200 DM/hour limit (in-memory, same pattern as reply guard)
+- `dmCount` stat field added to `AutomationRule` for analytics
+- `comment_to_dm` is composable — can be combined with `reply`, `like`, `hide` in the same action object
+- `actions` Zod schema now typed (replaces `z.any()`) — validates all action fields and requires at least one
+
+#### 📊 Dashboard Enhancement
+- `recentInteractions` now includes a `dm` field: `{ sent, text, sentAt }` per comment
 
 ## [1.1.0] — 2026-02-21
 
