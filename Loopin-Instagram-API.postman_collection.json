@@ -3,7 +3,7 @@
     "name": "Loopin API - Instagram Automation",
     "description": "Complete API collection for Loopin Instagram Automation SaaS platform. Includes user authentication, Instagram OAuth, account management, growth tracking, automation rules, and analytics.\n\n🌱 Seed credentials:\n  Email: test@example.com\n  Password: password123\n  AccountId: cmltqc8r00000prv0s3beagy6",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "version": "2.1.0"
+    "version": "2.2.0"
   },
   "auth": {
     "type": "bearer",
@@ -35,6 +35,24 @@
       "key": "instagramAccountId",
       "value": "cmltqc8r00000prv0s3beagy6",
       "description": "Seeded test account ID — update after connecting a real account",
+      "type": "string"
+    },
+    {
+      "key": "webhookVerifyToken",
+      "value": "",
+      "description": "Set this to INSTAGRAM_WEBHOOK_VERIFY_TOKEN from your .env",
+      "type": "string"
+    },
+    {
+      "key": "instagramAppSecret",
+      "value": "",
+      "description": "Set this to INSTAGRAM_APP_SECRET from your .env (used to sign webhook POST requests)",
+      "type": "string"
+    },
+    {
+      "key": "webhookBusinessAccountId",
+      "value": "",
+      "description": "Instagram Business Account ID that exists in your DB (instagramBusinessAccountId or instagramUserId fallback)",
       "type": "string"
     }
   ],
@@ -660,7 +678,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/instagram/webhooks?hub.mode=subscribe&hub.verify_token=YOUR_VERIFY_TOKEN&hub.challenge=test123",
+              "raw": "{{baseUrl}}/api/instagram/webhooks?hub.mode=subscribe&hub.verify_token={{webhookVerifyToken}}&hub.challenge=test123",
               "host": ["{{baseUrl}}"],
               "path": ["api", "instagram", "webhooks"],
               "query": [
@@ -670,8 +688,8 @@
                 },
                 {
                   "key": "hub.verify_token",
-                  "value": "YOUR_VERIFY_TOKEN",
-                  "description": "Your webhook verify token from .env"
+                  "value": "{{webhookVerifyToken}}",
+                  "description": "Use INSTAGRAM_WEBHOOK_VERIFY_TOKEN from .env"
                 },
                 {
                   "key": "hub.challenge",
@@ -679,12 +697,57 @@
                 }
               ]
             },
-            "description": "Test webhook verification endpoint. Replace YOUR_VERIFY_TOKEN with your actual token from .env"
+            "description": "Test webhook verification endpoint."
           },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Webhook verification succeeds', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.text()).to.eql('test123');",
+                  "});"
+                ]
+              }
+            }
+          ],
           "response": []
         },
         {
-          "name": "Webhook Event (POST)",
+          "name": "Webhook Event (POST, Signed)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const appSecret = pm.collectionVariables.get('instagramAppSecret') || pm.environment.get('instagramAppSecret');",
+                  "if (!appSecret) {",
+                  "    throw new Error('Missing instagramAppSecret. Set collection or environment variable.');",
+                  "}",
+                  "const rawBody = pm.request.body && pm.request.body.raw ? pm.request.body.raw : '';",
+                  "const signatureHex = CryptoJS.HmacSHA256(rawBody, appSecret).toString(CryptoJS.enc.Hex);",
+                  "pm.request.headers.upsert({ key: 'X-Hub-Signature-256', value: `sha256=${signatureHex}` });",
+                  "pm.request.headers.upsert({ key: 'Content-Type', value: 'application/json' });"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Signed webhook accepted', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -695,14 +758,50 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"object\": \"instagram\",\n  \"entry\": [\n    {\n      \"id\": \"instagram-account-id\",\n      \"time\": 1234567890,\n      \"changes\": [\n        {\n          \"field\": \"comments\",\n          \"value\": {\n            \"id\": \"comment-id\",\n            \"text\": \"Test comment\",\n            \"from\": {\n              \"id\": \"user-id\",\n              \"username\": \"testuser\"\n            },\n            \"media\": {\n              \"id\": \"media-id\",\n              \"media_product_type\": \"FEED\"\n            }\n          }\n        }\n      ]\n    }\n  ]\n}"
+              "raw": "{\n  \"object\": \"instagram\",\n  \"entry\": [\n    {\n      \"id\": \"{{webhookBusinessAccountId}}\",\n      \"time\": 1234567890,\n      \"changes\": [\n        {\n          \"field\": \"comments\",\n          \"value\": {\n            \"id\": \"comment-id-001\",\n            \"text\": \"Test comment\",\n            \"from\": {\n              \"id\": \"user-id-001\",\n              \"username\": \"testuser\"\n            },\n            \"media\": {\n              \"id\": \"media-id-001\",\n              \"media_product_type\": \"FEED\"\n            }\n          }\n        }\n      ]\n    }\n  ]\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/instagram/webhooks",
               "host": ["{{baseUrl}}"],
               "path": ["api", "instagram", "webhooks"]
             },
-            "description": "Test webhook event handler with sample comment event"
+            "description": "Signed webhook event test. Uses pre-request script to compute X-Hub-Signature-256 with instagramAppSecret."
+          },
+          "response": []
+        },
+        {
+          "name": "Webhook Event (POST, Unsigned Should Fail)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Unsigned webhook is rejected', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"object\": \"instagram\",\n  \"entry\": [\n    {\n      \"id\": \"{{webhookBusinessAccountId}}\",\n      \"time\": 1234567890,\n      \"changes\": [\n        {\n          \"field\": \"comments\",\n          \"value\": {\n            \"id\": \"comment-id-unsigned-001\",\n            \"text\": \"Unsigned test comment\",\n            \"from\": {\n              \"id\": \"user-id-unsigned-001\",\n              \"username\": \"unsigneduser\"\n            },\n            \"media\": {\n              \"id\": \"media-id-unsigned-001\",\n              \"media_product_type\": \"FEED\"\n            }\n          }\n        }\n      ]\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/instagram/webhooks",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "instagram", "webhooks"]
+            },
+            "description": "Negative test: no signature header. Should return 403 with strict signature verification."
           },
           "response": []
         }
@@ -742,6 +841,28 @@
               "path": ["api", "automation", "rules"]
             },
             "description": "Create a new automation rule"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Rule — Comment to DM (v1.2.0)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]
+            },
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountId\": \"{{instagramAccountId}}\",\n  \"name\": \"Giveaway DM\",\n  \"description\": \"DM everyone who comments the word giveaway\",\n  \"trigger\": \"comment\",\n  \"conditions\": {\n    \"text_contains\": [\"giveaway\", \"enter\", \"win\"]\n  },\n  \"actions\": {\n    \"reply\": \"You're entered! Check your DMs.\",\n    \"comment_to_dm\": \"Hey! Thanks for entering our giveaway. We'll announce the winner on Friday. Stay tuned!\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/automation/rules",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "automation", "rules"]
+            },
+            "description": "Create a rule that publicly replies to the comment AND sends a private DM.\n\naction fields:\n- comment_to_dm: private DM message (max 1000 chars)\n- reply: optional public reply on the comment\n\nMeta enforces ~200 DMs/hour — Loopin enforces this automatically via the rate guard."
           },
           "response": []
         },

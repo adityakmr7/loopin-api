@@ -34,15 +34,29 @@
 
 ---
 
-## 🚀 v1.2.0 — Comment → DM Automation
+## ✅ v1.2.0 — Comment → DM Automation (Shipped)
 
 **Goal:** The #1 high-conversion feature used by ManyChat & Inrō.
 
-- [ ] `comment_to_dm` action type in `AutomationRule.actions`
-- [ ] Send direct DM when a user comments on a post
-- [ ] Configurable DM message template per rule
-- [ ] Rate-limit DM sends to respect Meta's ~200 DM/hour limit
-- [ ] Track DM sent status in `WebhookEvent` / `InstagramComment`
+- [x] `comment_to_dm` action type in `AutomationRule.actions`
+- [x] Send direct DM when a user comments on a post
+- [x] Configurable DM message template per rule
+- [x] Rate-limit DM sends to respect Meta's ~200 DM/hour limit
+- [x] Track DM sent status in `InstagramComment` (`dmSent`, `dmText`, `dmSentAt`, `dmError`)
+
+---
+
+## 🧱 v1.2.1 — Reliability & Scalability (Planned)
+
+**Goal:** Make webhook handling and automation execution production-safe at scale.
+
+- [x] Redis-backed queue for webhook processing
+- [x] Async webhook ingestion (store + enqueue, process in worker)
+- [x] Idempotency guards for duplicate webhook events
+- [x] Redis-based per-account rate limits (replace in-memory)
+- [x] Distributed Redis locks for cron jobs (single-run)
+- [x] Strict webhook signature verification across environments
+- [x] Queue retry policy + dead-letter logging for exhausted webhook jobs
 
 ---
 

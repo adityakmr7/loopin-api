@@ -1,5 +1,5 @@
 import { getOrCreateSettings } from '@/services/settings.service';
-import { canReply, recordReply } from '@/services/rate-guard.service';
+import { canReply, recordReply, canSendDM, recordDM } from '@/services/rate-guard.service';
 
 /**
  * Sleep for a random number of milliseconds between min and max.
@@ -17,7 +17,8 @@ export async function executeActions(
   commentId: string,
   accountId: string,
   actions: any,
-  userId: string
+  userId: string,
+  instagramUserId?: string // commenter's IG user ID (required for comment_to_dm)
 ): Promise<void> {
   console.log(`🎬 Executing actions for comment ${commentId}`);
 
@@ -25,7 +26,7 @@ export async function executeActions(
   const settings = await getOrCreateSettings(userId);
 
   // Per-account rate limit check
-  if (!canReply(accountId, settings.maxRepliesPerHour)) {
+  if (!(await canReply(accountId, settings.maxRepliesPerHour))) {
     console.warn(
       `🚫 Rate limit reached for account ${accountId} — ` +
       `max ${settings.maxRepliesPerHour} replies/hour. Skipping.`
@@ -38,11 +39,28 @@ export async function executeActions(
     await randomDelay(settings.replyDelayMinSecs, settings.replyDelayMaxSecs);
   }
 
+  // DM action
+  if (actions.comment_to_dm) {
+    if (!instagramUserId) {
+      console.warn(`⚠️ comment_to_dm action skipped — instagramUserId not provided`);
+    } else if (!(await canSendDM(accountId))) {
+      console.warn(`🚫 DM rate limit reached for account ${accountId} — 200 DMs/hour. Skipping.`);
+    } else {
+      try {
+        const { sendCommentToDM } = await import('@/services/dm.service');
+        await sendCommentToDM(commentId, accountId, instagramUserId, actions.comment_to_dm);
+        await recordDM(accountId);
+      } catch (error) {
+        console.error(`❌ Failed to send DM:`, error instanceof Error ? error.message : error);
+      }
+    }
+  }
+
   // Reply to comment
   if (actions.reply) {
     try {
       await replyToComment(commentId, accountId, actions.reply);
-      recordReply(accountId);
+      await recordReply(accountId);
     } catch (error) {
       console.error(`❌ Failed to reply:`, error instanceof Error ? error.message : error);
     }

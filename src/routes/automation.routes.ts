@@ -6,6 +6,18 @@ import { prisma } from '@/config/database';
 
 const automation = new Hono();
 
+const actionsSchema = z
+  .object({
+    reply: z.string().min(1).max(2200).optional(),
+    like: z.boolean().optional(),
+    hide: z.boolean().optional(),
+    comment_to_dm: z.string().min(1).max(1000).optional(),
+  })
+  .refine(
+    (a) => a.reply || a.like || a.hide || a.comment_to_dm,
+    { message: 'At least one action (reply, like, hide, comment_to_dm) is required' }
+  );
+
 // Validation schemas
 const createRuleSchema = z.object({
   accountId: z.string(),
@@ -13,7 +25,7 @@ const createRuleSchema = z.object({
   description: z.string().optional(),
   trigger: z.enum(['comment', 'mention', 'message']),
   conditions: z.any(),
-  actions: z.any(),
+  actions: actionsSchema,
 });
 
 // Update schema - all fields optional

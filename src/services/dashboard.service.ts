@@ -14,6 +14,11 @@ interface Interaction {
     text: string | null;
     repliedAt: Date | null;
   };
+  dm: {
+    sent: boolean;
+    text: string | null;
+    sentAt: Date | null;
+  };
 }
 
 interface DashboardStats {
@@ -82,6 +87,9 @@ export async function getDashboardStats(accountId: string): Promise<DashboardSta
         replied: true,
         replyText: true,
         repliedAt: true,
+        dmSent: true,
+        dmText: true,
+        dmSentAt: true,
       },
     }),
   ]);
@@ -100,6 +108,11 @@ export async function getDashboardStats(accountId: string): Promise<DashboardSta
       sent: comment.replied,
       text: comment.replyText ?? null,
       repliedAt: comment.repliedAt ?? null,
+    },
+    dm: {
+      sent: comment.dmSent,
+      text: comment.dmText ?? null,
+      sentAt: comment.dmSentAt ?? null,
     },
   }));
 

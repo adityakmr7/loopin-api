@@ -2,7 +2,10 @@ import { Hono } from 'hono';
 import { config } from '@/config/env';
 import type { ApiResponse } from '@/types';
 import { prisma } from '@/config/database';
-import { processWebhookEvent } from '@/services/webhook-processor.service';
+import { storeWebhookEvent, computeWebhookEventHash } from '@/services/webhook-event.service';
+import { getWebhookEventsQueue } from '@/config/queue';
+import { Prisma } from '@prisma/client';
+import { createHmac, timingSafeEqual } from 'crypto';
 
 const webhooks = new Hono();
 
@@ -33,10 +36,25 @@ webhooks.get('/', (c) => {
  * Instagram sends POST requests when events occur
  */
 webhooks.post('/', async (c) => {
-  const body = await c.req.json();
-  console.log("body", body)
+  const rawBody = await c.req.text();
+  const signature256 = c.req.header('x-hub-signature-256');
+  const signature = c.req.header('x-hub-signature');
+
+  const isValid = verifySignature(rawBody, signature256, signature);
+  if (!isValid) {
+    console.warn('❌ Invalid webhook signature');
+    return c.text('Forbidden', 403);
+  }
+
+  let body: any;
+  try {
+    body = JSON.parse(rawBody);
+  } catch {
+    return c.text('Invalid JSON', 400);
+  }
 
   console.log('📩 Instagram webhook received:', JSON.stringify(body, null, 2));
+  const queue = getWebhookEventsQueue();
 
   // Verify the request is from Instagram
   // In production, verify the X-Hub-Signature header
@@ -78,9 +96,28 @@ webhooks.post('/', async (c) => {
       
       for (const change of entry.changes || []) {
         try {
-          await processWebhookEvent(account.id, change.field, change.value);
+          const eventHash = computeWebhookEventHash({
+            accountId: account.id,
+            field: change.field,
+            value: change.value,
+          });
+
+          const event = await storeWebhookEvent({
+            eventType: change.field,
+            instagramUserId: change.value?.from?.id || change.value?.id || 'unknown',
+            accountId: account.id,
+            eventHash,
+            payload: { field: change.field, value: change.value },
+          });
+
+          await queue.add('webhook-event', { eventId: event.id }, { jobId: event.id });
         } catch (error) {
-          console.error(`❌ Failed to process change:`, error);
+          if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+            console.log('ℹ️ Duplicate webhook event skipped');
+            continue;
+          }
+
+          console.error(`❌ Failed to enqueue change:`, error);
           // Continue processing other changes even if one fails
         }
       }
@@ -90,5 +127,37 @@ webhooks.post('/', async (c) => {
   // Always respond with 200 OK quickly
   return c.json({ success: true });
 });
+
+function verifySignature(
+  rawBody: string,
+  signature256?: string | null,
+  signature?: string | null
+): boolean {
+  const appSecret = config.instagram.appSecret;
+
+  if (!appSecret) {
+    console.error('❌ INSTAGRAM_APP_SECRET is required for webhook signature verification');
+    return false;
+  }
+
+  if (signature256 && signature256.startsWith('sha256=')) {
+    const expected = createHmac('sha256', appSecret).update(rawBody).digest('hex');
+    return safeCompare(expected, signature256.replace('sha256=', ''));
+  }
+
+  if (signature && signature.startsWith('sha1=')) {
+    const expected = createHmac('sha1', appSecret).update(rawBody).digest('hex');
+    return safeCompare(expected, signature.replace('sha1=', ''));
+  }
+
+  return false;
+}
+
+function safeCompare(left: string, right: string): boolean {
+  const leftBuf = Buffer.from(left);
+  const rightBuf = Buffer.from(right);
+  if (leftBuf.length !== rightBuf.length) return false;
+  return timingSafeEqual(leftBuf, rightBuf);
+}
 
 export default webhooks;

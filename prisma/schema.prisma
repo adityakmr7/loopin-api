@@ -124,6 +124,7 @@ model WebhookEvent {
   eventType       String    // "comments", "mentions", "messages", "media"
   instagramUserId String    // Instagram user ID who triggered event
   accountId       String    // Our Instagram account that received event
+  eventHash       String    @unique // Idempotency key (derived from payload)
   payload         Json      // Full webhook payload
   processed       Boolean   @default(false)
   processedAt     DateTime?
@@ -152,6 +153,11 @@ model InstagramComment {
   replied   Boolean  @default(false)
   replyText String?  @db.Text
   repliedAt DateTime?
+  // DM tracking (v1.2.0)
+  dmSent    Boolean   @default(false)
+  dmText    String?   @db.Text
+  dmSentAt  DateTime?
+  dmError   String?   // Error message if DM failed
   createdAt DateTime @default(now())
 
   account InstagramAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
@@ -175,6 +181,7 @@ model AutomationRule {
   triggerCount  Int       @default(0)
   replyCount    Int       @default(0)
   likeCount     Int       @default(0)
+  dmCount       Int       @default(0)
   lastTriggered DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt

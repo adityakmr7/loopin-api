@@ -12,6 +12,7 @@ export async function processCommentAutomation(
     commentId: string;
     text: string;
     username: string;
+    instagramUserId: string; // commenter's IG user ID — needed for DM
   }
 ): Promise<void> {
   console.log(`🤖 Checking automation rules for comment: ${comment.commentId}`);
@@ -35,16 +36,17 @@ export async function processCommentAutomation(
     try {
       console.log(`📋 Executing rule: ${rule.name}`);
       
-      await executeActions(comment.commentId, accountId, rule.actions, rule.userId);
+      await executeActions(comment.commentId, accountId, rule.actions, rule.userId, comment.instagramUserId);
       
       // Update rule stats
-      const actions = rule.actions as { reply?: string; like?: boolean; hide?: boolean };
+      const actions = rule.actions as { reply?: string; like?: boolean; hide?: boolean; comment_to_dm?: string };
       await prisma.automationRule.update({
         where: { id: rule.id },
         data: {
           triggerCount: { increment: 1 },
           replyCount: { increment: actions.reply ? 1 : 0 },
           likeCount: { increment: actions.like ? 1 : 0 },
+          dmCount: { increment: actions.comment_to_dm ? 1 : 0 },
           lastTriggered: new Date(),
         },
       });
