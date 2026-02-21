@@ -76,17 +76,21 @@ export async function getDashboardStats(accountId: string): Promise<DashboardSta
   // Format recent activity
   const recentActivity = recentEvents.map((event) => {
     const payload = event.payload as any;
+    // Payload is stored as { field, value } — username lives at payload.value.from.username
+    const from = payload.value?.from || payload.from;
+    const username = from?.username || from?.id || null;
+    const displayName = username ? `@${username}` : 'someone';
     let description = '';
 
     switch (event.eventType) {
       case 'comments':
-        description = `New comment from @${payload.from?.username || 'unknown'}`;
+        description = `New comment from ${displayName}`;
         break;
       case 'mentions':
-        description = `Mentioned by @${payload.from?.username || 'unknown'}`;
+        description = `Mentioned by ${displayName}`;
         break;
       case 'messages':
-        description = `New message from @${payload.from?.username || 'unknown'}`;
+        description = `New message from ${displayName}`;
         break;
       default:
         description = `${event.eventType} event received`;
@@ -96,6 +100,7 @@ export async function getDashboardStats(accountId: string): Promise<DashboardSta
       id: event.id,
       type: event.eventType,
       description,
+      username: username ?? null,
       timestamp: event.createdAt,
     };
   });
