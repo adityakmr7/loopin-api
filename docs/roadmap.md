@@ -57,6 +57,7 @@
 - [x] Distributed Redis locks for cron jobs (single-run)
 - [x] Strict webhook signature verification across environments
 - [x] Queue retry policy + dead-letter logging for exhausted webhook jobs
+- [ ] Background worker rollout on production paid tier (deferred for MVP hosting constraints)
 
 ---
 

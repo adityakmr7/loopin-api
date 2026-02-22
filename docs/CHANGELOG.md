@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Redis-backed rate guards for replies and DMs
 - Distributed Redis locks for cron jobs (`token-refresh`, `snapshot`, `token-expiry-alert`)
 - Dead-letter queue routing and logging for webhook jobs that exhaust retry attempts
+- Configurable webhook processing mode (`queue` or `inline`) for MVP deployments without workers
+- Rate guard backend modes (`redis`, `memory`, `auto`) with automatic memory fallback when Redis is unavailable
 
 ### Planned
 - Automation rule templates library (`AutomationTemplate` model)

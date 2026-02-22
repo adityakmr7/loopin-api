@@ -4,6 +4,7 @@ import type { ApiResponse } from '@/types';
 import { prisma } from '@/config/database';
 import { storeWebhookEvent, computeWebhookEventHash } from '@/services/webhook-event.service';
 import { getWebhookEventsQueue } from '@/config/queue';
+import { processStoredWebhookEvent } from '@/services/webhook-processor.service';
 import { Prisma } from '@prisma/client';
 import { createHmac, timingSafeEqual } from 'crypto';
 
@@ -54,7 +55,8 @@ webhooks.post('/', async (c) => {
   }
 
   console.log('📩 Instagram webhook received:', JSON.stringify(body, null, 2));
-  const queue = getWebhookEventsQueue();
+  const useQueue = config.webhooks.processingMode === 'queue';
+  const queue = useQueue ? getWebhookEventsQueue() : null;
 
   // Verify the request is from Instagram
   // In production, verify the X-Hub-Signature header
@@ -110,14 +112,26 @@ webhooks.post('/', async (c) => {
             payload: { field: change.field, value: change.value },
           });
 
-          await queue.add('webhook-event', { eventId: event.id }, { jobId: event.id });
+          if (useQueue && queue) {
+            await queue.add('webhook-event', { eventId: event.id }, { jobId: event.id });
+          } else {
+            await processStoredWebhookEvent(event);
+            await prisma.webhookEvent.update({
+              where: { id: event.id },
+              data: {
+                processed: true,
+                processedAt: new Date(),
+                error: null,
+              },
+            });
+          }
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
             console.log('ℹ️ Duplicate webhook event skipped');
             continue;
           }
 
-          console.error(`❌ Failed to enqueue change:`, error);
+          console.error(`❌ Failed to process change:`, error);
           // Continue processing other changes even if one fails
         }
       }
