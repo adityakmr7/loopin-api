@@ -13,6 +13,8 @@ const envSchema = z.object({
   RATE_LIMIT_WINDOW_MS: z.string().default('900000'),
   RATE_LIMIT_MAX_REQUESTS: z.string().default('100'),
   REDIS_URL: z.string().min(1).default('redis://localhost:6379'),
+  WEBHOOK_PROCESSING_MODE: z.enum(['queue', 'inline']).default('queue'),
+  RATE_GUARD_MODE: z.enum(['redis', 'memory', 'auto']).default('auto'),
   INSTAGRAM_APP_ID: z.string().min(1),
   INSTAGRAM_APP_SECRET: z.string().min(1),
   INSTAGRAM_REDIRECT_URI: z.string().url(),
@@ -59,6 +61,12 @@ export const config = {
   },
   redis: {
     url: env.REDIS_URL,
+  },
+  webhooks: {
+    processingMode: env.WEBHOOK_PROCESSING_MODE,
+  },
+  rateGuard: {
+    mode: env.RATE_GUARD_MODE,
   },
   instagram: {
     appId: env.INSTAGRAM_APP_ID,
